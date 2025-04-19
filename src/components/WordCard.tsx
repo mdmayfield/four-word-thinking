@@ -1,4 +1,6 @@
 import React from 'react';
+import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
+import { Button } from '@mantine/core';
 
 interface WordCardProps {
   words: [string, string, string, string];
@@ -11,6 +13,13 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
     position: 'absolute'
   }
 
+  const buttonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '10px',
+    padding: '5px',
+    zIndex: 1
+  }
+
   return (
     <div style={{
       width: '320px',
@@ -19,6 +28,20 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
       backgroundColor: 'white',
       position: 'relative'
     }}>
+      <Button
+        style={{ ...buttonStyle, left: '10px' }}
+        aria-label="Rotate left"
+      >
+        <IconArrowBackUp size={24} />
+      </Button>
+
+      <Button
+        style={{ ...buttonStyle, right: '10px' }}
+        aria-label="Rotate right"
+      >
+        <IconArrowForwardUp size={24} />
+      </Button>
+
       {/* Top word */}
       <div style={{
         ...wordStyle,
