@@ -11,6 +11,7 @@ const EDGE_SPACING = '0px';
 
 const WordCard: React.FC<WordCardProps> = ({ words }) => {
   const [rotation, setRotation] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const [isRotating, setIsRotating] = useState<boolean>(false);
   const [topWordIndex, setTopWordIndex] = useState(0);
   const rightWordIndex = (topWordIndex + 1) % 4;
@@ -39,7 +40,7 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
     top: '10px',
     padding: '5px',
     zIndex: 1,
-    opacity: isRotating ? 0 : 1,
+    opacity: isRotating ? 0 : isHovered ? 1 : 0.1,
     transition: 'opacity 0.2s'
   }
 
@@ -53,7 +54,9 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
       transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
       transform: `rotate(${rotation}deg)`,
       zIndex: isRotating ? 10 : 1
-    }}>
+    }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}>
       <Button
         style={{ ...buttonStyle, left: '10px' }}
         aria-label="Rotate left"
