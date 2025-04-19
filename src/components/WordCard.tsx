@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { Button } from '@mantine/core';
 
@@ -6,10 +6,31 @@ interface WordCardProps {
   words: [string, string, string, string];
 }
 
+const ROTATION_DURATION = 600; // in milliseconds
+const EDGE_SPACING = '0px';
+
 const WordCard: React.FC<WordCardProps> = ({ words }) => {
-  const EDGE_SPACING = `0px`;
+  const [rotation, setRotation] = useState(0);
+  const [isRotating, setIsRotating] = useState<boolean>(false);
+  const [topWordIndex, setTopWordIndex] = useState(0);
+  const rightWordIndex = (topWordIndex + 1) % 4;
+  const bottomWordIndex = (topWordIndex + 2) % 4;
+  const leftWordIndex = (topWordIndex + 3) % 4;
+
+  const handleRotate = (direction: 'left' | 'right') => {
+    setIsRotating(true);
+    const degrees = direction === 'right' ? 90 : -90;
+    const newTopWord = direction === 'right' ? leftWordIndex : rightWordIndex;
+    setRotation(degrees);
+    setTimeout(() => {
+      setIsRotating(false);
+      setRotation(0);
+      setTopWordIndex(newTopWord);
+    }, ROTATION_DURATION);
+  };
+
   const wordStyle: React.CSSProperties = {
-    fontSize: `32px`,
+    fontSize: '32px',
     position: 'absolute'
   }
 
@@ -17,7 +38,9 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
     position: 'absolute',
     top: '10px',
     padding: '5px',
-    zIndex: 1
+    zIndex: 1,
+    opacity: isRotating ? 0 : 1,
+    transition: 'opacity 0.2s'
   }
 
   return (
@@ -26,11 +49,14 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
       height: '320px',
       border: '2px solid black',
       backgroundColor: 'white',
-      position: 'relative'
+      position: 'relative',
+      transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms`,
+      transform: `rotate(${rotation}deg)`
     }}>
       <Button
         style={{ ...buttonStyle, left: '10px' }}
         aria-label="Rotate left"
+        onClick={() => handleRotate('left')}
       >
         <IconArrowBackUp size={24} />
       </Button>
@@ -38,48 +64,45 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
       <Button
         style={{ ...buttonStyle, right: '10px' }}
         aria-label="Rotate right"
+        onClick={() => handleRotate('right')}
       >
         <IconArrowForwardUp size={24} />
       </Button>
 
-      {/* Top word */}
       <div style={{
         ...wordStyle,
         left: '50%',
         top: EDGE_SPACING,
         transform: 'translateX(-50%)',
       }}>
-        {words[0]}
+        {words[topWordIndex]}
       </div>
 
-      {/* Right word */}
       <div style={{
         ...wordStyle,
         right: EDGE_SPACING,
         top: '50%',
         transform: 'translateY(-50%) rotate(90deg)',
       }}>
-        {words[1]}
+        {words[rightWordIndex]}
       </div>
 
-      {/* Bottom word */}
       <div style={{
         ...wordStyle,
         left: '50%',
         bottom: EDGE_SPACING,
         transform: 'translateX(-50%) rotate(180deg)',
       }}>
-        {words[2]}
+        {words[bottomWordIndex]}
       </div>
 
-      {/* Left word */}
       <div style={{
         ...wordStyle,
         left: EDGE_SPACING,
         top: '50%',
         transform: 'translateY(-50%) rotate(-90deg)',
       }}>
-        {words[3]}
+        {words[leftWordIndex]}
       </div>
     </div>
   );
