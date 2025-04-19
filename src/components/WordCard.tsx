@@ -6,7 +6,7 @@ interface WordCardProps {
   words: [string, string, string, string];
 }
 
-const ROTATION_DURATION = 600; // in milliseconds
+const ROTATION_DURATION = 300; // ms
 const EDGE_SPACING = '0px';
 
 const WordCard: React.FC<WordCardProps> = ({ words }) => {
@@ -50,8 +50,9 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
       border: '2px solid black',
       backgroundColor: 'white',
       position: 'relative',
-      transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms`,
-      transform: `rotate(${rotation}deg)`
+      transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
+      transform: `rotate(${rotation}deg)`,
+      zIndex: isRotating ? 10 : 1
     }}>
       <Button
         style={{ ...buttonStyle, left: '10px' }}
