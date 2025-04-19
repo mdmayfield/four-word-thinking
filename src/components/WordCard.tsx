@@ -31,7 +31,7 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
 
   const wordStyle: React.CSSProperties = {
     fontSize: '32px',
-    position: 'absolute'
+    position: 'absolute',
   }
 
   const buttonStyle: React.CSSProperties = {
@@ -82,7 +82,8 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
         ...wordStyle,
         right: EDGE_SPACING,
         top: '50%',
-        transform: 'translateY(-50%) rotate(90deg)',
+        transform: 'translateY(-50%)',
+        writingMode: 'vertical-lr'
       }}>
         {words[rightWordIndex]}
       </div>
@@ -100,7 +101,8 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
         ...wordStyle,
         left: EDGE_SPACING,
         top: '50%',
-        transform: 'translateY(-50%) rotate(-90deg)',
+        transform: 'translateY(-50%) rotate(180deg)',
+        writingMode: 'vertical-lr'
       }}>
         {words[leftWordIndex]}
       </div>
