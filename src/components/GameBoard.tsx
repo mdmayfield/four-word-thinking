@@ -1,9 +1,11 @@
 import React from 'react';
-import { Button, Center, Stack, Text } from '@mantine/core';
-import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
+import { Stack, Text } from '@mantine/core';
 import OffboardCards from './OffboardCards';
 import BoardGrid from './Board/BoardGrid';
 import { useGameBoard } from './Board/useGameBoard';
+import ModeToggle from './GameBoard/ModeToggle';
+import RotationControls from './GameBoard/RotationControls';
+import ActionControls from './GameBoard/ActionControls';
 
 interface GameBoardProps {
   cardWords: readonly [
@@ -53,39 +55,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
         Game Board
       </Text>
 
-      <Center>
-        <Button
-          color={mode === 'writing' ? 'blue' : 'gray'}
-          onClick={() => setMode('writing')}
-          mr="xs"
-        >
-          Writing Mode
-        </Button>
-        <Button color={mode === 'guessing' ? 'blue' : 'gray'} onClick={() => setMode('guessing')}>
-          Guessing Mode
-        </Button>
-      </Center>
+      <ModeToggle mode={mode} setMode={setMode} />
 
       <Stack gap="xs" align="center" style={{ width: '100%' }}>
-        <Center style={{ width: '640px', justifyContent: 'space-between' }}>
-          <Button size="xs" onClick={() => rotateBoard('left')} aria-label="Rotate board left">
-            <IconArrowBackUp size={16} />
-          </Button>
-          <Text mx="xs">Board Rotation: {boardRotation}°</Text>
-          <Button size="xs" onClick={() => rotateBoard('right')} aria-label="Rotate board right">
-            <IconArrowForwardUp size={16} />
-          </Button>
-        </Center>
-
-        {mode === 'writing' ? (
-          <Button onClick={writingSubmit} size="sm" mt="xs">
-            Save Setup
-          </Button>
-        ) : (
-          <Button onClick={guessingSubmit} size="sm" mt="xs" disabled={!guessingSubmitEnabled}>
-            Submit Guess
-          </Button>
-        )}
+        <RotationControls boardRotation={boardRotation} rotateBoard={rotateBoard} />
+        <ActionControls
+          mode={mode}
+          onWritingSubmit={writingSubmit}
+          onGuessingSubmit={guessingSubmit}
+          guessingSubmitEnabled={guessingSubmitEnabled}
+        />
       </Stack>
 
       <div

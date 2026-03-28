@@ -102,8 +102,8 @@ export const getSlotFromPoint = (
   if (!boardRect) return null;
 
   const boardSize = 640;
-  let localX = clientX - boardRect.left;
-  let localY = clientY - boardRect.top;
+  const localX = clientX - boardRect.left;
+  const localY = clientY - boardRect.top;
   const normalized = ((displayRotation % 360) + 360) % 360;
 
   let x = localX;

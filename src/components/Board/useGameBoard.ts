@@ -4,9 +4,11 @@ import { CardState } from '../../hooks/GameStateTypes';
 import {
   Mode,
   baseDecoy,
-  getShuffledOffboardPositions,
   shuffleArray,
 } from '../gameBoardUtils';
+import { useBoardDimensions } from './useBoardDimensions';
+import { useGuessingSetup } from './useGuessingSetup';
+import { useWindowDropHandlers } from './useWindowDropHandlers';
 
 export type EdgeTuple = readonly [string, string, string, string];
 
@@ -54,9 +56,9 @@ export const useGameBoard = (
   const [displayRotation, setDisplayRotation] = useState(0);
   const [disableTransition, setDisableTransition] = useState(false);
   const [edges, setEdges] = useState<EdgeTuple>(initialEdges);
-  const [boardRect, setBoardRect] = useState<DOMRect | null>(null);
   const boardRef = React.useRef<HTMLDivElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const boardRect = useBoardDimensions(gridRef);
   const [decoyState, setDecoyState] = useState<CardState>(baseDecoy);
   const [cards, setCards] = useState<CardState[]>(
     cardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 }))
@@ -70,32 +72,25 @@ export const useGameBoard = (
   const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
 
-  useEffect(() => {
-    const updateBoardRect = () => {
-      if (gridRef.current) {
-        setBoardRect(gridRef.current.getBoundingClientRect());
-      }
-    };
+  useGuessingSetup({
+    mode,
+    savedSetup,
+    decoyState,
+    boardRect,
+    hasInitializedGuessing,
+    setSlotCardIds,
+    setOffboardCardIds,
+    setOffboardCardPositions,
+    setHasInitializedGuessing,
+  });
 
-    updateBoardRect();
-    window.addEventListener('resize', updateBoardRect);
-    return () => window.removeEventListener('resize', updateBoardRect);
-  }, [gridRef]);
-
-  useEffect(() => {
-    if (mode !== 'guessing' || !savedSetup || !boardRect || hasInitializedGuessing) {
-      return;
-    }
-
-    setSlotCardIds([null, null, null, null]);
-
-    const ids = savedSetup.cards.map((c) => c.id);
-    const allIds = shuffleArray([...ids, decoyState.id]);
-
-    setOffboardCardIds(allIds);
-    setOffboardCardPositions(getShuffledOffboardPositions(allIds, boardRect));
-    setHasInitializedGuessing(true);
-  }, [mode, savedSetup, decoyState, boardRect, hasInitializedGuessing]);
+  useWindowDropHandlers({
+    mode,
+    dragOffsetsRef,
+    setSlotCardIds,
+    setOffboardCardIds,
+    setOffboardCardPositions,
+  });
 
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
