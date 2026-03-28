@@ -32,8 +32,6 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
         const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
         const zIndex = cardId === topOffboardCardId ? 1002 : 1001;
 
-        const normalizedTop = card.topWordIndex;
-
         return (
           <div
             key={`off-abs-${cardId}`}
@@ -48,7 +46,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
               id={cardId}
               words={card.words}
               boardRotation={0}
-              topWordIndex={normalizedTop}
+              topWordIndex={card.topWordIndex}
               isRotationEnabled={true}
               onRotate={(direction) => setCardTopWord(cardId, direction)}
               draggable
