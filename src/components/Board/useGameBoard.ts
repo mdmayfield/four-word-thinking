@@ -231,6 +231,28 @@ export const useGameBoard = (
     event.dataTransfer.setData('application/json', JSON.stringify({ cardId }));
     event.dataTransfer.effectAllowed = 'move';
 
+    const isOnBoard = slotCardIds.some((id) => id === cardId);
+
+    // Set a custom drag image for board cards to preserve rotation.
+    if (isOnBoard && event.currentTarget instanceof HTMLElement) {
+      const cloned = event.currentTarget.cloneNode(true) as HTMLElement;
+      cloned.style.position = 'fixed';
+      cloned.style.top = '-9999px';
+      cloned.style.left = '-9999px';
+      cloned.style.zIndex = '-9999';
+      cloned.style.transform = `rotate(${boardRotation}deg)`;
+      document.body.appendChild(cloned);
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.width / 2;
+      const y = rect.height / 2;
+      event.dataTransfer.setDragImage(cloned, x, y);
+
+      setTimeout(() => {
+        if (cloned.parentElement) cloned.parentElement.removeChild(cloned);
+      }, 0);
+    }
+
     const currentPos = offboardCardPositions[cardId];
     const offset = currentPos
       ? { x: event.clientX - currentPos.x, y: event.clientY - currentPos.y }
