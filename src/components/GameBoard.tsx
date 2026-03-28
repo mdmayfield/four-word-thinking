@@ -664,7 +664,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                   <WordCard
                     id={cardId}
                     words={card.words}
-                    boardRotation={displayRotation}
+                    boardRotation={0}
                     topWordIndex={screenTop}
                     isRotationEnabled={true}
                     onRotate={(direction) => setCardTopWord(cardId, direction)}
