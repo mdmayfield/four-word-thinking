@@ -40,6 +40,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(cards.map((c) => c.id));
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
   const [offboardCardPositions, setOffboardCardPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
 
   const getShuffledOffboardPositions = React.useCallback((ids: string[]) => {
     if (!boardRect) {
@@ -145,14 +146,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   }, [gridRef]);
 
   useEffect(() => {
-    if (mode === 'guessing' && savedSetup && boardRect) {
+    if (mode === 'guessing' && savedSetup && boardRect && !hasInitializedGuessing) {
       setSlotCardIds([null, null, null, null]);
       const ids = savedSetup.cards.map((c) => c.id);
       const allIds = [...ids, decoyState.id];
       setOffboardCardIds(allIds);
       setOffboardCardPositions(getShuffledOffboardPositions(allIds));
+      setHasInitializedGuessing(true);
     }
-  }, [mode, savedSetup, decoyState, boardRect, getShuffledOffboardPositions]);
+    if (mode === 'writing' && hasInitializedGuessing) {
+      setHasInitializedGuessing(false);
+    }
+  }, [mode, savedSetup, decoyState, boardRect, getShuffledOffboardPositions, hasInitializedGuessing]);
 
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
@@ -279,6 +284,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
 
     setDecoyState(randomizedDecoy);
     setSavedSetup({ edges, cards: randomizedCards, boardRotation });
+    setHasInitializedGuessing(false);
     setMode('guessing');
   };
 
