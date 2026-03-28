@@ -30,6 +30,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [decoyState, setDecoyState] = useState<CardState>(baseDecoy);
   const [displayRotation, setDisplayRotation] = useState(0); // animating absolute degrees
   const [edges, setEdges] = useState<readonly [string, string, string, string]>(initialEdges);
+  const [boardRect, setBoardRect] = useState<DOMRect | null>(null);
+  const boardRef = React.useRef<HTMLDivElement>(null);
+  const gridRef = React.useRef<HTMLDivElement>(null);
   const [disableTransition, setDisableTransition] = useState(false);
   const [cards, setCards] = useState<CardState[]>(
     cardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 }))
@@ -38,24 +41,118 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
   const [offboardCardPositions, setOffboardCardPositions] = useState<Record<string, { x: number; y: number }>>({});
 
-  const getRandomPosition = () => {
-    const maxX = Math.max(0, window.innerWidth - 340);
-    const maxY = Math.max(0, window.innerHeight - 340);
-    const x = Math.floor(Math.random() * maxX);
-    const y = Math.floor(Math.random() * maxY);
-    return { x, y };
-  };
+  const getShuffledOffboardPositions = React.useCallback((ids: string[]) => {
+    if (!boardRect) {
+      return ids.reduce((acc, id) => ({ ...acc, [id]: { x: 20, y: 20 } }), {} as Record<string, { x: number; y: number }>);
+    }
+
+    const windowW = window.innerWidth;
+    const windowH = window.innerHeight;
+    const cardWidth = 320;
+    const cardHeight = 320;
+    const sideMargin = 20;
+
+    const innerBoardWidth = 640;
+    const innerLeft = boardRect.left + (boardRect.width - innerBoardWidth) / 2;
+    const innerRight = innerLeft + innerBoardWidth;
+
+    const leftZoneXMin = Math.max(sideMargin, innerLeft - cardWidth - 120);
+    const leftZoneXMax = Math.max(leftZoneXMin, innerLeft - cardWidth - 80);
+    const rightZoneXMin = Math.min(windowW - cardWidth - sideMargin, innerRight + 80);
+    const rightZoneXMax = Math.min(windowW - cardWidth - sideMargin, innerRight + 120);
+
+    console.log('DEBUG: boardRect', {
+      left: boardRect.left,
+      right: boardRect.right,
+      width: boardRect.width,
+      innerLeft,
+      innerRight,
+      boardOffset: (boardRect.width - innerBoardWidth) / 2,
+    });
+    console.log('DEBUG: zones', {
+      leftZoneXMin,
+      leftZoneXMax,
+      rightZoneXMin,
+      rightZoneXMax,
+      windowW,
+      cardWidth,
+      sideMargin,
+    });
+
+
+    const leftCount = Math.floor(ids.length / 2);
+    const rightCount = ids.length - leftCount;
+
+    const arrangeY = (count: number) => {
+      if (count === 0) return [] as number[];
+      const totalCardHeight = cardHeight * count;
+      const spacing = Math.min(30, (windowH - totalCardHeight - sideMargin * 2) / Math.max(1, count - 1));
+      const totalUsedHeight = totalCardHeight + spacing * Math.max(0, count - 1);
+      const startY = Math.max(sideMargin, (windowH - totalUsedHeight) / 2);
+
+      return Array.from({ length: count }, (_, i) => {
+        const baseline = startY + i * (cardHeight + spacing);
+        const jitter = (Math.random() - 0.5) * 20;
+        return Math.max(sideMargin, Math.min(windowH - cardHeight - sideMargin, baseline + jitter));
+      });
+    };
+
+    const leftY = arrangeY(leftCount);
+    const rightY = arrangeY(rightCount);
+
+    const chooseX = (min: number, max: number) => {
+      if (max <= min) return min;
+      return min + Math.random() * (max - min);
+    };
+
+    const positions: Record<string, { x: number; y: number }> = {};
+    let idIndex = 0;
+
+    for (let i = 0; i < leftCount; i += 1) {
+      const id = ids[idIndex++];
+      const x = chooseX(leftZoneXMin, leftZoneXMax);
+      positions[id] = {
+        x,
+        y: leftY[i],
+      };
+    }
+
+    for (let i = 0; i < rightCount; i += 1) {
+      const id = ids[idIndex++];
+      const x = chooseX(rightZoneXMin, rightZoneXMax);
+      positions[id] = {
+        x,
+        y: rightY[i],
+      };
+    }
+
+    console.log('[DEBUG] offboard positions:', positions);
+    return positions;
+  }, [boardRect]);
 
   useEffect(() => {
-    if (mode === 'guessing' && savedSetup) {
+    const updateBoardRect = () => {
+      if (gridRef.current) {
+        setBoardRect(gridRef.current.getBoundingClientRect());
+      }
+    };
+
+    updateBoardRect();
+    window.addEventListener('resize', updateBoardRect);
+    return () => {
+      window.removeEventListener('resize', updateBoardRect);
+    };
+  }, [gridRef]);
+
+  useEffect(() => {
+    if (mode === 'guessing' && savedSetup && boardRect) {
       setSlotCardIds([null, null, null, null]);
       const ids = savedSetup.cards.map((c) => c.id);
-      setOffboardCardIds([...ids, decoyState.id]);
-      setOffboardCardPositions(
-        ids.concat(decoyState.id).reduce((acc, id) => ({ ...acc, [id]: getRandomPosition() }), {} as Record<string, { x: number; y: number }>)
-      );
+      const allIds = [...ids, decoyState.id];
+      setOffboardCardIds(allIds);
+      setOffboardCardPositions(getShuffledOffboardPositions(allIds));
     }
-  }, [mode, savedSetup, decoyState]);
+  }, [mode, savedSetup, decoyState, boardRect, getShuffledOffboardPositions]);
 
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
@@ -333,6 +430,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       </Stack>
 
       <div
+        ref={boardRef}
         style={{
           position: 'relative',
           width: '760px',
@@ -344,6 +442,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
         }}
       >
         <div
+          ref={gridRef}
           style={{
             position: 'absolute',
             width: '640px',
@@ -431,8 +530,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                   key={`off-abs-${cardId}`}
                   style={{
                     position: 'fixed',
-                    left: Math.max(0, Math.min(window.innerWidth - 320, pos.x - 160)),
-                    top: Math.max(0, Math.min(window.innerHeight - 320, pos.y - 160)),
+                    left: Math.max(0, Math.min(window.innerWidth - 320, pos.x)),
+                    top: Math.max(0, Math.min(window.innerHeight - 320, pos.y)),
                     width: '320px',
                     height: '320px',
                     pointerEvents: 'auto',
