@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../hooks/GameStateContext';
 import { CardState } from '../../hooks/GameStateTypes';
 import { baseDecoy, shuffleArray } from '../gameBoardUtils';
@@ -81,72 +81,20 @@ export const useGameBoard = (
 
   useWindowDropHandlers({
     mode,
+    boardRotation,
+    slotCardIds,
+    decoyId: decoyState.id,
     dragOffsetsRef,
+    setDecoyState,
+    setCards,
     setSlotCardIds,
     setOffboardCardIds,
     setOffboardCardPositions,
   });
 
-  useEffect(() => {
-    const handleWindowDrop = (event: DragEvent) => {
-      event.preventDefault();
-      if (!event.dataTransfer || mode !== 'guessing') return;
-
-      const payload = event.dataTransfer.getData('application/json');
-      if (!payload) return;
-
-      const { cardId } = JSON.parse(payload) as { cardId: string };
-      if (!cardId) return;
-
-      const wasOnBoard = slotCardIds.some((id) => id === cardId);
-      if (wasOnBoard) {
-        const rotation = ((boardRotation % 360) + 360) % 360;
-        const shift = (4 - rotation / 90) % 4;
-
-        setCards((prevCards) =>
-          prevCards.map((card) =>
-            card.id === cardId
-              ? { ...card, topWordIndex: (card.topWordIndex + shift) % 4 }
-              : card
-          )
-        );
-      }
-
-      setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
-      setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
-
-      const offset = dragOffsetsRef.current[cardId] || { x: 160, y: 160 };
-      const rawX = event.clientX - offset.x;
-      const rawY = event.clientY - offset.y;
-
-      setOffboardCardPositions((prev) => ({
-        ...prev,
-        [cardId]: {
-          x: Math.max(0, Math.min(window.innerWidth - 320, rawX)),
-          y: Math.max(0, Math.min(window.innerHeight - 320, rawY)),
-        },
-      }));
-
-      delete dragOffsetsRef.current[cardId];
-    };
-
-    const handleWindowDragOver = (event: DragEvent) => {
-      event.preventDefault();
-    };
-
-    window.addEventListener('drop', handleWindowDrop);
-    window.addEventListener('dragover', handleWindowDragOver);
-
-    return () => {
-      window.removeEventListener('drop', handleWindowDrop);
-      window.removeEventListener('dragover', handleWindowDragOver);
-    };
-  }, [mode]);
-
   const primeLookup = useMemo<Record<string, CardState>>(() => {
-    const base = savedSetup ? savedSetup.cards : cards;
-    return Object.fromEntries(base.map((card) => [card.id, card]));
-  }, [cards, savedSetup]);
+    return Object.fromEntries(cards.map((card) => [card.id, card]));
+  }, [cards]);
 
   const rotateBoard = (direction: 'left' | 'right') => {
     const delta = direction === 'right' ? 90 : -90;
@@ -157,23 +105,16 @@ export const useGameBoard = (
 
   const setCardTopWord = (cardId: string, direction: 'left' | 'right') => {
     const delta = direction === 'right' ? -1 : 1;
-    const normalize = (x: number) => (x + 4) % 4;
+    const update = (topWordIndex: number) => ((topWordIndex + delta) % 4 + 4) % 4;
 
-    const updateFn = (topWordIndex: number) => normalize(topWordIndex + delta);
-
-    setCards((prev) =>
-      prev.map((card) =>
-        card.id === cardId ? { ...card, topWordIndex: updateFn(card.topWordIndex) } : card
-      )
-    );
-
-    if (savedSetup) {
-      setSavedSetup({
-        ...savedSetup,
-        cards: savedSetup.cards.map((card) =>
-          card.id === cardId ? { ...card, topWordIndex: updateFn(card.topWordIndex) } : card
-        ),
-      });
+    if (cardId === decoyState.id) {
+      setDecoyState((prev) => ({ ...prev, topWordIndex: update(prev.topWordIndex) }));
+    } else {
+      setCards((prev) =>
+        prev.map((card) =>
+          card.id === cardId ? { ...card, topWordIndex: update(card.topWordIndex) } : card
+        )
+      );
     }
   };
 
@@ -188,17 +129,23 @@ export const useGameBoard = (
     if (!cardId) return;
 
     const isOffBoard = offboardCardIds.includes(cardId);
-    if (isOffBoard) {
-      const rotation = ((boardRotation % 360) + 360) % 360;
-      const shift = (4 - rotation / 90) % 4;
+    const rotation = ((boardRotation % 360) + 360) % 360;
+    const steps = rotation / 90;
 
-      setCards((prevCards) =>
-        prevCards.map((card) =>
-          card.id === cardId
-            ? { ...card, topWordIndex: (card.topWordIndex + shift) % 4 }
-            : card
-        )
-      );
+    // Convert screen-relative → board-relative when a card enters the board
+    if (isOffBoard) {
+      const toBoard = (idx: number) => (idx + steps) % 4;
+      if (cardId === decoyState.id) {
+        setDecoyState((prev) => ({ ...prev, topWordIndex: toBoard(prev.topWordIndex) }));
+      } else {
+        setCards((prevCards) =>
+          prevCards.map((card) =>
+            card.id === cardId
+              ? { ...card, topWordIndex: toBoard(card.topWordIndex) }
+              : card
+          )
+        );
+      }
     }
 
     let droppedOutCard: string | null = null;
@@ -224,6 +171,23 @@ export const useGameBoard = (
       newSlots[targetSlot] = cardId;
       return newSlots;
     });
+
+    // Convert board-relative → screen-relative for any card displaced off the board
+    if (droppedOutCard) {
+      const toScreen = (idx: number) => ((idx - steps) % 4 + 4) % 4;
+      const outId = droppedOutCard;
+      if (outId === decoyState.id) {
+        setDecoyState((prev) => ({ ...prev, topWordIndex: toScreen(prev.topWordIndex) }));
+      } else {
+        setCards((prevCards) =>
+          prevCards.map((card) =>
+            card.id === outId
+              ? { ...card, topWordIndex: toScreen(card.topWordIndex) }
+              : card
+          )
+        );
+      }
+    }
 
     setOffboardCardIds((prevOff) => {
       const withoutDragged = prevOff.filter((id) => id !== cardId);
@@ -291,6 +255,10 @@ export const useGameBoard = (
   };
 
   const writingSubmit = () => {
+    // Save the original layout as the immutable answer key
+    setSavedSetup({ edges, cards: cards.map((c) => ({ ...c })), boardRotation });
+
+    // Randomize orientations and order for the guessing player
     const shuffledCards = shuffleArray(cards);
     const randomizedCards = shuffledCards.map((card) => ({
       ...card,
@@ -302,8 +270,8 @@ export const useGameBoard = (
       topWordIndex: Math.floor(Math.random() * 4),
     };
 
+    setCards(randomizedCards);
     setDecoyState(randomizedDecoy);
-    setSavedSetup({ edges, cards: randomizedCards, boardRotation });
     setHasInitializedGuessing(false);
     setMode('guessing');
   };

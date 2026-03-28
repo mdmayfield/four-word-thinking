@@ -1,8 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { CardState } from '../../hooks/GameStateTypes';
 
 interface WindowDropHandlersParams {
   mode: 'writing' | 'guessing';
+  boardRotation: number;
+  slotCardIds: (string | null)[];
+  decoyId: string;
   dragOffsetsRef: React.MutableRefObject<Record<string, { x: number; y: number }>>;
+  setDecoyState: React.Dispatch<React.SetStateAction<CardState>>;
+  setCards: React.Dispatch<React.SetStateAction<CardState[]>>;
   setSlotCardIds: React.Dispatch<React.SetStateAction<(string | null)[]>>;
   setOffboardCardIds: React.Dispatch<React.SetStateAction<string[]>>;
   setOffboardCardPositions: React.Dispatch<React.SetStateAction<Record<string, { x: number; y: number }>>>;
@@ -10,11 +16,22 @@ interface WindowDropHandlersParams {
 
 export const useWindowDropHandlers = ({
   mode,
+  boardRotation,
+  slotCardIds,
+  decoyId,
   dragOffsetsRef,
+  setDecoyState,
+  setCards,
   setSlotCardIds,
   setOffboardCardIds,
   setOffboardCardPositions,
 }: WindowDropHandlersParams) => {
+  // Use refs to avoid stale closures without re-registering listeners on every state change
+  const boardRotationRef = useRef(boardRotation);
+  boardRotationRef.current = boardRotation;
+  const slotCardIdsRef = useRef(slotCardIds);
+  slotCardIdsRef.current = slotCardIds;
+
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
       event.preventDefault();
@@ -25,6 +42,26 @@ export const useWindowDropHandlers = ({
 
       const { cardId } = JSON.parse(payload) as { cardId: string };
       if (!cardId) return;
+
+      // Convert board-relative → screen-relative when a card leaves the board
+      const wasOnBoard = slotCardIdsRef.current.some((id) => id === cardId);
+      if (wasOnBoard) {
+        const rotation = ((boardRotationRef.current % 360) + 360) % 360;
+        const steps = rotation / 90;
+        const toScreen = (idx: number) => ((idx - steps) % 4 + 4) % 4;
+
+        if (cardId === decoyId) {
+          setDecoyState((prev) => ({ ...prev, topWordIndex: toScreen(prev.topWordIndex) }));
+        } else {
+          setCards((prev) =>
+            prev.map((card) =>
+              card.id === cardId
+                ? { ...card, topWordIndex: toScreen(card.topWordIndex) }
+                : card
+            )
+          );
+        }
+      }
 
       setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
       setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
@@ -55,5 +92,5 @@ export const useWindowDropHandlers = ({
       window.removeEventListener('drop', handleWindowDrop);
       window.removeEventListener('dragover', handleWindowDragOver);
     };
-  }, [mode, dragOffsetsRef, setSlotCardIds, setOffboardCardIds, setOffboardCardPositions]);
+  }, [mode, decoyId, dragOffsetsRef, setDecoyState, setCards, setSlotCardIds, setOffboardCardIds, setOffboardCardPositions]);
 };
