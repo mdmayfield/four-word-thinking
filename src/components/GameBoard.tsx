@@ -158,7 +158,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
           }}
         >
           {cardWords.map((wordset, idx) => (
-            <WordCard key={idx} words={wordset} />
+            <WordCard key={idx} words={wordset} boardRotation={displayRotation} />
           ))}
 
           {edgeInputs}

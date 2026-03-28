@@ -4,12 +4,13 @@ import { Button } from '@mantine/core';
 
 interface WordCardProps {
   words: readonly [string, string, string, string];
+  boardRotation: number;
 }
 
 const ROTATION_DURATION = 300; // ms
 const EDGE_SPACING = '0px';
 
-const WordCard: React.FC<WordCardProps> = ({ words }) => {
+const WordCard: React.FC<WordCardProps> = ({ words, boardRotation }) => {
   const [rotation, setRotation] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isRotating, setIsRotating] = useState<boolean>(false);
@@ -35,14 +36,29 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
     position: 'absolute',
   }
 
+  const normalizedBoardRotation = ((boardRotation % 360) + 360) % 360;
+  const boardSteps = Math.round(normalizedBoardRotation / 90) % 4;
+  const reverseSteps = (4 - boardSteps) % 4;
+
   const buttonStyle: React.CSSProperties = {
     position: 'absolute',
-    top: '10px',
     padding: '5px',
     zIndex: 1,
     opacity: isRotating ? 0 : isHovered ? 1 : 0.1,
     transition: 'opacity 0.2s'
-  }
+  };
+
+  const iconCounterRotate = `rotate(${-normalizedBoardRotation}deg)`;
+
+  const buttonCorners: React.CSSProperties[] = [
+    { top: '10px', left: '10px' },
+    { top: '10px', right: '10px' },
+    { bottom: '10px', right: '10px' },
+    { bottom: '10px', left: '10px' },
+  ];
+
+  const topLeftButtonStyle = { ...buttonStyle, ...buttonCorners[(0 + reverseSteps) % 4] };
+  const topRightButtonStyle = { ...buttonStyle, ...buttonCorners[(1 + reverseSteps) % 4] };
 
   return (
     <div style={{
@@ -58,19 +74,19 @@ const WordCard: React.FC<WordCardProps> = ({ words }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}>
       <Button
-        style={{ ...buttonStyle, left: '10px' }}
+        style={topLeftButtonStyle}
         aria-label="Rotate left"
         onClick={() => handleRotate('left')}
       >
-        <IconArrowBackUp size={24} />
+        <IconArrowBackUp size={24} style={{ transform: iconCounterRotate, display: 'block' }} />
       </Button>
 
       <Button
-        style={{ ...buttonStyle, right: '10px' }}
+        style={topRightButtonStyle}
         aria-label="Rotate right"
         onClick={() => handleRotate('right')}
       >
-        <IconArrowForwardUp size={24} />
+        <IconArrowForwardUp size={24} style={{ transform: iconCounterRotate, display: 'block' }} />
       </Button>
 
       <div style={{
