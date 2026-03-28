@@ -1,23 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState } from 'react';
-
-export type CardState = {
-  id: string;
-  words: readonly [string, string, string, string];
-  topWordIndex: number;
-};
-
-export type SavedSetup = {
-  edges: readonly [string, string, string, string];
-  cards: CardState[];
-  boardRotation: number;
-};
-
-export type GuessSubmission = {
-  slotCardIds: (string | null)[];
-  offboardCardIds: string[];
-  edges: readonly [string, string, string, string];
-  boardRotation: number;
-};
+import { SavedSetup, GuessSubmission } from './GameStateTypes';
 
 interface GameStateContextValue {
   savedSetup: SavedSetup | null;

@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Center, Stack, Text } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import WordCard from './WordCard';
-import { useGameState, CardState } from '../hooks/GameStateContext';
+import { useGameState } from '../hooks/GameStateContext';
+import { CardState } from '../hooks/GameStateTypes';
 
 interface GameBoardProps {
   cardWords: readonly [
