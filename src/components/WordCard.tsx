@@ -3,7 +3,7 @@ import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { Button } from '@mantine/core';
 
 interface WordCardProps {
-  words: [string, string, string, string];
+  words: readonly [string, string, string, string];
 }
 
 const ROTATION_DURATION = 300; // ms

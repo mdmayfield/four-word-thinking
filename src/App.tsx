@@ -1,18 +1,17 @@
-import { Box, SimpleGrid, Stack, Title } from '@mantine/core';
-import WordCard from './components/WordCard';
+import { Box } from '@mantine/core';
+import GameBoard from './components/GameBoard';
 
 function App() {
+  const cards = [
+    ['Console', 'Voice', 'Recipient', 'Cell'],
+    ['Thunder', 'Straw', 'Religion', 'Promotion'],
+    ['Padlock', 'Inside', 'Astronaut', 'Fish'],
+    ['Finger', 'Note', 'Hard', 'Kitchen'],
+  ] as const;
+
   return (
     <Box ta="center" pt="lg" w="100%">
-      <Stack align="center" gap="xl">
-        <Title>Four-Word Thinking</Title>
-        <SimpleGrid cols={2} spacing="none">
-          <WordCard words={["Console", "Voice", "Recipient", "Cell"]} />
-          <WordCard words={["Thunder", "Straw", "Religion", "Promotion"]} />
-          <WordCard words={["Padlock", "Inside", "Astronaut", "Fish"]} />
-          <WordCard words={["Finger", "Note", "Hard", "Kitchen"]} />
-        </SimpleGrid>
-      </Stack>
+      <GameBoard cardWords={cards} />
     </Box>
   );
 }
