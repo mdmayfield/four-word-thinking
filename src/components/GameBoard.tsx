@@ -172,9 +172,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       setOffboardCardPositions(getShuffledOffboardPositions(allIds));
       setHasInitializedGuessing(true);
     }
-    if (mode === 'writing' && hasInitializedGuessing) {
-      setHasInitializedGuessing(false);
-    }
   }, [mode, savedSetup, decoyState, boardRect, getShuffledOffboardPositions, hasInitializedGuessing]);
 
   useEffect(() => {
