@@ -147,24 +147,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     });
   };
 
-  const handleDropOnOffboard = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const payload = event.dataTransfer.getData('application/json');
-    if (!payload) return;
-    const { cardId } = JSON.parse(payload) as { cardId: string };
 
-    const x = event.clientX;
-    const y = event.clientY;
-
-    setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
-    setOffboardCardIds((prev) => {
-      if (!prev.includes(cardId)) {
-        return [...prev, cardId];
-      }
-      return prev;
-    });
-    setOffboardCardPositions((prev) => ({ ...prev, [cardId]: { x, y } }));
-  };
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, cardId: string) => {
     event.dataTransfer.setData('application/json', JSON.stringify({ cardId }));
@@ -402,30 +385,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
 
         {mode === 'guessing' && (
           <div
-            onDrop={handleDropOnOffboard}
-            onDragOver={(e) => e.preventDefault()}
-            style={{
-              marginTop: '680px',
-              width: '640px',
-              minHeight: '160px',
-              backgroundColor: '#f3f3f3',
-              border: '2px dashed #aaa',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '12px',
-              padding: '8px',
-              boxSizing: 'border-box',
-              alignItems: 'center',
-            }}
-          >
-            <Text size="sm" fw={500} style={{ width: '100%' }}>
-              Offboard cards (drag anywhere outside board to place with absolute page position)
-            </Text>
-          </div>
-        )}
-
-        {mode === 'guessing' && (
-          <div
             style={{
               position: 'fixed',
               top: 0,
@@ -466,10 +425,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
               );
             })}
           </div>
-        )}
-
-        {!savedSetup && mode === 'guessing' && (
-          <Text color="red">Please set up the board in writing mode first and hit Save Setup before guessing.</Text>
         )}
       </div>
     </Stack>
