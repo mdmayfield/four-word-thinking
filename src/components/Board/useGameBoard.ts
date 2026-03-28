@@ -325,7 +325,10 @@ export const useGameBoard = (
 
     setSlotCardIds(newSlotCardIds);
     setOffboardCardIds((prev) => [...prev, ...cardsToRemove]);
-    const newPositions = getShuffledOffboardPositions(cardsToRemove, boardRect);
+    // Pass all offboard IDs so the layout can relocate existing cards if needed
+    const allOffboardIds = [...offboardCardIds, ...cardsToRemove];
+    const newPositions = getShuffledOffboardPositions(cardsToRemove, boardRect, offboardCardPositions, allOffboardIds);
+    // If a full re-layout occurred, newPositions contains all offboard IDs; merging handles both cases
     setOffboardCardPositions((prev) => ({ ...prev, ...newPositions }));
   };
 

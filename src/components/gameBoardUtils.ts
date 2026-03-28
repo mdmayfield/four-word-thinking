@@ -15,9 +15,50 @@ export const shuffleArray = <T,>(input: T[]): T[] => {
   return array;
 };
 
+const avoidsOverlap = (
+  candidate: { x: number; y: number },
+  occupied: { x: number; y: number }[],
+  cardWidth: number,
+  cardHeight: number
+): boolean =>
+  occupied.every(
+    (o) => Math.abs(o.x - candidate.x) >= cardWidth || Math.abs(o.y - candidate.y) >= cardHeight
+  );
+
+const nudgeToFit = (
+  candidate: { x: number; y: number },
+  occupied: { x: number; y: number }[],
+  cardWidth: number,
+  cardHeight: number,
+  windowH: number,
+  sideMargin: number
+): { x: number; y: number } | null => {
+  const yMin = sideMargin;
+  const yMax = windowH - cardHeight - sideMargin;
+  if (yMax < yMin) return null;
+
+  const step = cardHeight + 10;
+  const startY = Math.max(yMin, Math.min(yMax, candidate.y));
+
+  // Scan downward from the candidate position
+  for (let y = startY; y <= yMax; y += step) {
+    const pos = { x: candidate.x, y };
+    if (avoidsOverlap(pos, occupied, cardWidth, cardHeight)) return pos;
+  }
+  // Scan upward from the candidate position
+  for (let y = startY - step; y >= yMin; y -= step) {
+    const pos = { x: candidate.x, y };
+    if (avoidsOverlap(pos, occupied, cardWidth, cardHeight)) return pos;
+  }
+
+  return null;
+};
+
 export const getShuffledOffboardPositions = (
   ids: string[],
-  boardRect: DOMRect | null
+  boardRect: DOMRect | null,
+  existingPositions: Record<string, { x: number; y: number }> = {},
+  allOffboardIds?: string[]
 ): Record<string, { x: number; y: number }> => {
   if (!boardRect) {
     return ids.reduce(
@@ -75,17 +116,36 @@ export const getShuffledOffboardPositions = (
     return min + Math.random() * (max - min);
   };
 
+  const occupied = Object.values(existingPositions);
   const positions: Record<string, { x: number; y: number }> = {};
   let idIndex = 0;
+  let hadFailure = false;
+
+  const clampToWindow = (pos: { x: number; y: number }) => ({
+    x: Math.max(sideMargin, Math.min(windowW - cardWidth - sideMargin, pos.x)),
+    y: Math.max(sideMargin, Math.min(windowH - cardHeight - sideMargin, pos.y)),
+  });
 
   for (let i = 0; i < leftCount; i += 1) {
     const id = shuffledIds[idIndex++];
-    positions[id] = { x: chooseX(leftZoneXMin, leftZoneXMax), y: leftY[i] };
+    const candidate = { x: chooseX(leftZoneXMin, leftZoneXMax), y: leftY[i] };
+    const placed = nudgeToFit(candidate, [...occupied, ...Object.values(positions)], cardWidth, cardHeight, windowH, sideMargin);
+    if (placed === null) hadFailure = true;
+    positions[id] = placed ?? clampToWindow(candidate);
   }
 
   for (let i = 0; i < rightCount; i += 1) {
     const id = shuffledIds[idIndex++];
-    positions[id] = { x: chooseX(rightZoneXMin, rightZoneXMax), y: rightY[i] };
+    const candidate = { x: chooseX(rightZoneXMin, rightZoneXMax), y: rightY[i] };
+    const placed = nudgeToFit(candidate, [...occupied, ...Object.values(positions)], cardWidth, cardHeight, windowH, sideMargin);
+    if (placed === null) hadFailure = true;
+    positions[id] = placed ?? clampToWindow(candidate);
+  }
+
+  // If we couldn't find clear spots and we know all offboard IDs, re-layout everything
+  // together so existing cards can shift to make room.
+  if (hadFailure && allOffboardIds) {
+    return getShuffledOffboardPositions(allOffboardIds, boardRect);
   }
 
   return positions;
