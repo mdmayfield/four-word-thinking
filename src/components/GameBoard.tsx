@@ -17,7 +17,7 @@ interface GameBoardProps {
 
 type Mode = 'writing' | 'guessing';
 
-const decoyCard: CardState = {
+const baseDecoy: CardState = {
   id: 'decoy',
   words: ['Decoy', 'Bait', 'Lure', 'Trap'],
   topWordIndex: 0,
@@ -27,6 +27,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const { savedSetup, setSavedSetup, setGuessSubmission } = useGameState();
   const [mode, setMode] = useState<Mode>('writing');
   const [boardRotation, setBoardRotation] = useState(0); // logical 0, 90, 180, 270
+  const [decoyState, setDecoyState] = useState<CardState>(baseDecoy);
   const [displayRotation, setDisplayRotation] = useState(0); // animating absolute degrees
   const [edges, setEdges] = useState<readonly [string, string, string, string]>(initialEdges);
   const [disableTransition, setDisableTransition] = useState(false);
@@ -37,13 +38,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
   const [offboardCardPositions, setOffboardCardPositions] = useState<Record<string, { x: number; y: number }>>({});
 
+  const getRandomPosition = () => {
+    const maxX = Math.max(0, window.innerWidth - 340);
+    const maxY = Math.max(0, window.innerHeight - 340);
+    const x = Math.floor(Math.random() * maxX);
+    const y = Math.floor(Math.random() * maxY);
+    return { x, y };
+  };
+
   useEffect(() => {
     if (mode === 'guessing' && savedSetup) {
-      setSlotCardIds(savedSetup.cards.map((c) => c.id));
-      setOffboardCardIds([decoyCard.id]);
-      setOffboardCardPositions({});
+      setSlotCardIds([null, null, null, null]);
+      const ids = savedSetup.cards.map((c) => c.id);
+      setOffboardCardIds([...ids, decoyState.id]);
+      setOffboardCardPositions(
+        ids.concat(decoyState.id).reduce((acc, id) => ({ ...acc, [id]: getRandomPosition() }), {} as Record<string, { x: number; y: number }>)
+      );
     }
-  }, [mode, savedSetup]);
+  }, [mode, savedSetup, decoyState]);
 
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
@@ -158,7 +170,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     const answer = window.confirm('Save this setup and switch to guessing mode?');
     if (!answer) return;
 
-    setSavedSetup({ edges, cards, boardRotation });
+    const randomizedCards = cards.map((card) => ({
+      ...card,
+      topWordIndex: Math.floor(Math.random() * 4),
+    }));
+
+    const randomizedDecoy = {
+      ...baseDecoy,
+      topWordIndex: Math.floor(Math.random() * 4),
+    };
+
+    setDecoyState(randomizedDecoy);
+    setSavedSetup({ edges, cards: randomizedCards, boardRotation });
     setMode('guessing');
   };
 
@@ -370,9 +393,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                     {cardId ? (
                       <WordCard
                         id={cardId}
-                        words={primeLookup[cardId]?.words ?? decoyCard.words}
+                        words={primeLookup[cardId]?.words ?? decoyState.words}
                         boardRotation={displayRotation}
-                        topWordIndex={primeLookup[cardId]?.topWordIndex ?? 0}
+                        topWordIndex={primeLookup[cardId]?.topWordIndex ?? decoyState.topWordIndex}
                         isRotationEnabled={true}
                         onRotate={(direction) => setCardTopWord(cardId, direction)}
                         draggable
@@ -401,7 +424,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
             }}
           >
             {offboardCardIds.map((cardId) => {
-              const card = primeLookup[cardId] ?? decoyCard;
+              const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
               const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
               return (
                 <div
