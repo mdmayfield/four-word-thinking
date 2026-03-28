@@ -98,6 +98,20 @@ export const useGameBoard = (
       const { cardId } = JSON.parse(payload) as { cardId: string };
       if (!cardId) return;
 
+      const wasOnBoard = slotCardIds.some((id) => id === cardId);
+      if (wasOnBoard) {
+        const rotation = ((boardRotation % 360) + 360) % 360;
+        const shift = (4 - rotation / 90) % 4;
+
+        setCards((prevCards) =>
+          prevCards.map((card) =>
+            card.id === cardId
+              ? { ...card, topWordIndex: (card.topWordIndex + shift) % 4 }
+              : card
+          )
+        );
+      }
+
       setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
       setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
 
@@ -172,6 +186,20 @@ export const useGameBoard = (
 
     const { cardId } = JSON.parse(payload) as { cardId: string };
     if (!cardId) return;
+
+    const isOffBoard = offboardCardIds.includes(cardId);
+    if (isOffBoard) {
+      const rotation = ((boardRotation % 360) + 360) % 360;
+      const shift = (4 - rotation / 90) % 4;
+
+      setCards((prevCards) =>
+        prevCards.map((card) =>
+          card.id === cardId
+            ? { ...card, topWordIndex: (card.topWordIndex + shift) % 4 }
+            : card
+        )
+      );
+    }
 
     let droppedOutCard: string | null = null;
     const dropPos = { x: event.clientX, y: event.clientY };
