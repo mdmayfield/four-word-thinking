@@ -258,6 +258,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     return row * 2 + col;
   };
 
+  const boardRotationSteps = ((displayRotation % 360) + 360) % 360 / 90;
+
+  const screenTopIndexFromBoard = (boardTopIndex: number) =>
+    (boardTopIndex - boardRotationSteps + 4) % 4;
+
   const setCardTopWord = (cardId: string, direction: 'left' | 'right') => {
     const delta = direction === 'right' ? -1 : 1;
     setCards((prev) =>
@@ -642,6 +647,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
               const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
               const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
               const zIndex = cardId === topOffboardCardId ? 1002 : 1001;
+              const screenTop = screenTopIndexFromBoard(card.topWordIndex);
               return (
                 <div
                   key={`off-abs-${cardId}`}
@@ -658,8 +664,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                   <WordCard
                     id={cardId}
                     words={card.words}
-                    boardRotation={0}
-                    topWordIndex={card.topWordIndex}
+                    boardRotation={displayRotation}
+                    topWordIndex={screenTop}
                     isRotationEnabled={true}
                     onRotate={(direction) => setCardTopWord(cardId, direction)}
                     draggable
