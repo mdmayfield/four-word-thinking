@@ -2,8 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Center, Stack, Text } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import WordCard from './WordCard';
+import EdgeInputs from './EdgeInputs';
+import OffboardCards from './OffboardCards';
 import { useGameState } from '../hooks/GameStateContext';
 import { CardState } from '../hooks/GameStateTypes';
+import {
+  Mode,
+  baseDecoy,
+  getSlotFromPoint,
+  getShuffledOffboardPositions,
+  shuffleArray,
+} from './gameBoardUtils';
 
 interface GameBoardProps {
   cardWords: readonly [
@@ -14,14 +23,6 @@ interface GameBoardProps {
   ];
   initialEdges?: readonly [string, string, string, string];
 }
-
-type Mode = 'writing' | 'guessing';
-
-const baseDecoy: CardState = {
-  id: 'decoy',
-  words: ['Decoy', 'Bait', 'Lure', 'Trap'],
-  topWordIndex: 0,
-};
 
 const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top', 'Right', 'Bottom', 'Left'] as const }) => {
   const { savedSetup, setSavedSetup, setGuessSubmission } = useGameState();
@@ -44,113 +45,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
 
-  const shuffleArray = <T,>(input: T[]): T[] => {
-    const array = [...input];
-    for (let i = array.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  };
-
-  const getShuffledOffboardPositions = React.useCallback((ids: string[]) => {
-    if (!boardRect) {
-      return ids.reduce((acc, id) => ({ ...acc, [id]: { x: 20, y: 20 } }), {} as Record<string, { x: number; y: number }>);
-    }
-
-    const windowW = window.innerWidth;
-    const windowH = window.innerHeight;
-    const cardWidth = 320;
-    const cardHeight = 320;
-    const sideMargin = 20;
-
-    const innerBoardWidth = 640;
-    const innerLeft = boardRect.left + (boardRect.width - innerBoardWidth) / 2;
-    const innerRight = innerLeft + innerBoardWidth;
-
-    const leftZoneXMin = Math.max(sideMargin, innerLeft - cardWidth - 120);
-    const leftZoneXMax = Math.max(leftZoneXMin, innerLeft - cardWidth - 80);
-    const rightZoneXMin = Math.min(windowW - cardWidth - sideMargin, innerRight + 80);
-    const rightZoneXMax = Math.min(windowW - cardWidth - sideMargin, innerRight + 120);
-
-    console.log('DEBUG: boardRect', {
-      left: boardRect.left,
-      right: boardRect.right,
-      width: boardRect.width,
-      innerLeft,
-      innerRight,
-      boardOffset: (boardRect.width - innerBoardWidth) / 2,
-    });
-    console.log('DEBUG: zones', {
-      leftZoneXMin,
-      leftZoneXMax,
-      rightZoneXMin,
-      rightZoneXMax,
-      windowW,
-      cardWidth,
-      sideMargin,
-    });
-
-
-    const makeDistribution = () => {
-      const option = Math.random() < 0.5 ? [2, 3] : [3, 2];
-      if (ids.length === 2) return [1, 1];
-      if (ids.length === 3) return [1, 2];
-      if (ids.length === 4) return [2, 2];
-      return option;
-    };
-
-    const [leftCount, rightCount] = makeDistribution();
-
-    const shuffledIds = shuffleArray(ids);
-
-    const arrangeY = (count: number) => {
-      if (count === 0) return [] as number[];
-      const totalCardHeight = cardHeight * count;
-      const spacing = Math.min(30, (windowH - totalCardHeight - sideMargin * 2) / Math.max(1, count - 1));
-      const totalUsedHeight = totalCardHeight + spacing * Math.max(0, count - 1);
-      const startY = Math.max(sideMargin, (windowH - totalUsedHeight) / 2);
-
-      return Array.from({ length: count }, (_, i) => {
-        const baseline = startY + i * (cardHeight + spacing);
-        const jitter = (Math.random() - 0.5) * 20;
-        return Math.max(sideMargin, Math.min(windowH - cardHeight - sideMargin, baseline + jitter));
-      });
-    };
-
-    const leftY = arrangeY(leftCount);
-    const rightY = arrangeY(rightCount);
-
-    const chooseX = (min: number, max: number) => {
-      if (max <= min) return min;
-      return min + Math.random() * (max - min);
-    };
-
-    const positions: Record<string, { x: number; y: number }> = {};
-    let idIndex = 0;
-
-    for (let i = 0; i < leftCount; i += 1) {
-      const id = shuffledIds[idIndex++];
-      const x = chooseX(leftZoneXMin, leftZoneXMax);
-      positions[id] = {
-        x,
-        y: leftY[i],
-      };
-    }
-
-    for (let i = 0; i < rightCount; i += 1) {
-      const id = shuffledIds[idIndex++];
-      const x = chooseX(rightZoneXMin, rightZoneXMax);
-      positions[id] = {
-        x,
-        y: rightY[i],
-      };
-    }
-
-    console.log('[DEBUG] offboard positions:', positions);
-    return positions;
-  }, [boardRect]);
-
   useEffect(() => {
     const updateBoardRect = () => {
       if (gridRef.current) {
@@ -171,10 +65,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       const ids = savedSetup.cards.map((c) => c.id);
       const allIds = shuffleArray([...ids, decoyState.id]);
       setOffboardCardIds(allIds);
-      setOffboardCardPositions(getShuffledOffboardPositions(allIds));
+      setOffboardCardPositions(getShuffledOffboardPositions(allIds, boardRect));
       setHasInitializedGuessing(true);
     }
-  }, [mode, savedSetup, decoyState, boardRect, getShuffledOffboardPositions, hasInitializedGuessing]);
+  }, [mode, savedSetup, decoyState, boardRect, hasInitializedGuessing]);
 
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
@@ -228,35 +122,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     setDisableTransition(false);
   };
 
-  const getSlotFromPoint = (clientX: number, clientY: number): number | null => {
-    if (!boardRect) return null;
 
-    const boardSize = 640;
-    const localX = clientX - boardRect.left;
-    const localY = clientY - boardRect.top;
-    const normalized = ((displayRotation % 360) + 360) % 360;
-
-    let x = localX;
-    let y = localY;
-
-    if (normalized === 90) {
-      x = localY;
-      y = boardSize - localX;
-    } else if (normalized === 180) {
-      x = boardSize - localX;
-      y = boardSize - localY;
-    } else if (normalized === 270) {
-      x = boardSize - localY;
-      y = localX;
-    }
-
-    if (x < 0 || y < 0 || x > boardSize || y > boardSize) return null;
-
-    const col = Math.min(1, Math.max(0, Math.floor(x / (boardSize / 2))));
-    const row = Math.min(1, Math.max(0, Math.floor(y / (boardSize / 2))));
-
-    return row * 2 + col;
-  };
 
   const setCardTopWord = (cardId: string, direction: 'left' | 'right') => {
     const delta = direction === 'right' ? -1 : 1;
@@ -414,92 +280,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     console.log('Guess submit payload', payload);
   };
 
-  const [top, right, bottom, left] = edges;
 
-  const edgeInputs = (
-    <>
-      <input
-        style={{
-          position: 'absolute',
-          top: '-2rem',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '420px',
-          height: '64px',
-          fontSize: '3rem',
-          textAlign: 'center',
-          zIndex: 10,
-          background: 'rgba(255,255,255,0.9)',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-        value={top}
-        onChange={(e) => setEdges([e.target.value, right, bottom, left] as const)}
-        aria-label="Top edge label"
-        disabled={mode === 'guessing'}
-      />
-      <input
-        style={{
-          position: 'absolute',
-          top: '50%',
-          right: '-2rem',
-          transform: 'translate(50%, -50%) rotate(90deg)',
-          width: '420px',
-          height: '64px',
-          fontSize: '3rem',
-          textAlign: 'center',
-          zIndex: 10,
-          background: 'rgba(255,255,255,0.9)',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-        value={right}
-        onChange={(e) => setEdges([top, e.target.value, bottom, left] as const)}
-        aria-label="Right edge label"
-        disabled={mode === 'guessing'}
-      />
-      <input
-        style={{
-          position: 'absolute',
-          bottom: '-2rem',
-          left: '50%',
-          transform: 'translate(-50%, 50%) rotate(180deg)',
-          width: '420px',
-          height: '64px',
-          fontSize: '3rem',
-          textAlign: 'center',
-          zIndex: 10,
-          background: 'rgba(255,255,255,0.9)',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-        value={bottom}
-        onChange={(e) => setEdges([top, right, e.target.value, left] as const)}
-        aria-label="Bottom edge label"
-        disabled={mode === 'guessing'}
-      />
-      <input
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '-2rem',
-          transform: 'translate(-50%, -50%) rotate(270deg)',
-          width: '420px',
-          height: '64px',
-          fontSize: '3rem',
-          textAlign: 'center',
-          zIndex: 10,
-          background: 'rgba(255,255,255,0.9)',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-        value={left}
-        onChange={(e) => setEdges([top, right, bottom, e.target.value] as const)}
-        aria-label="Left edge label"
-        disabled={mode === 'guessing'}
-      />
-    </>
-  );
 
   // in guessing mode we use savedSetup + decoy directly from primeLookup
 
@@ -578,7 +359,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
           }}
           onDrop={(e) => {
             e.preventDefault();
-            const targetSlot = getSlotFromPoint(e.clientX, e.clientY);
+            const targetSlot = getSlotFromPoint(e.clientX, e.clientY, boardRect, displayRotation);
             if (targetSlot !== null) {
               handleDropOnSlot(e as React.DragEvent<HTMLDivElement>, targetSlot);
             }
@@ -639,52 +420,20 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                 );
               })}
 
-          {edgeInputs}
+          <EdgeInputs edges={edges} setEdges={setEdges} mode={mode} />
         </div>
 
         {mode === 'guessing' && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              pointerEvents: 'none',
-              zIndex: 1000,
-            }}
-          >
-            {offboardCardIds.map((cardId) => {
-              const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
-              const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
-              const zIndex = cardId === topOffboardCardId ? 1002 : 1001;
-              return (
-                <div
-                  key={`off-abs-${cardId}`}
-                  style={{
-                    position: 'fixed',
-                    left: Math.max(0, Math.min(window.innerWidth - 320, pos.x)),
-                    top: Math.max(0, Math.min(window.innerHeight - 320, pos.y)),
-                    width: '320px',
-                    height: '320px',
-                    pointerEvents: 'auto',
-                    zIndex,
-                  }}
-                >
-                  <WordCard
-                    id={cardId}
-                    words={card.words}
-                    boardRotation={0}
-                    topWordIndex={(card.topWordIndex - ((boardRotation % 360 + 360) % 360) / 90 + 4) % 4}
-                    isRotationEnabled={true}
-                    onRotate={(direction) => setCardTopWord(cardId, direction)}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, cardId)}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          <OffboardCards
+            offboardCardIds={offboardCardIds}
+            primeLookup={primeLookup}
+            decoyState={decoyState}
+            offboardCardPositions={offboardCardPositions}
+            topOffboardCardId={topOffboardCardId}
+            boardRotation={boardRotation}
+            setCardTopWord={setCardTopWord}
+            onDragStart={handleDragStart}
+          />
         )}
       </div>
     </Stack>
