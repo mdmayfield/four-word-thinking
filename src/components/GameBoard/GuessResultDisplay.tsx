@@ -33,9 +33,11 @@ const SlotBadge: React.FC<SlotBadgeProps> = ({ label, cardCorrect, orientationCo
 
 interface GuessResultDisplayProps {
   result: GuessResult;
+  show?: boolean;
 }
 
-const GuessResultDisplay: React.FC<GuessResultDisplayProps> = ({ result }) => {
+const GuessResultDisplay: React.FC<GuessResultDisplayProps> = ({ result, show = false }) => {
+  if (!show) return null;
   const correctCount = result.slotResults.filter((r) => r.cardCorrect && r.orientationCorrect).length;
 
   return (

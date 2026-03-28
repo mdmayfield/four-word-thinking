@@ -102,7 +102,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={false} />
 
-      {guessResult && <GuessResultDisplay result={guessResult} />}
+      {guessResult && <GuessResultDisplay result={guessResult} show={false} />}
     </Stack>
   );
 };

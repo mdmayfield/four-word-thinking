@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../hooks/GameStateContext';
 import { CardState } from '../../hooks/GameStateTypes';
-import { baseDecoy, shuffleArray } from '../gameBoardUtils';
+import { baseDecoy, shuffleArray, getShuffledOffboardPositions } from '../gameBoardUtils';
+import { checkGuess } from '../../utils/checkGuess';
 import { Mode, EdgeTuple } from './types';
 import { useBoardDimensions } from './useBoardDimensions';
 import { useGuessingSetup } from './useGuessingSetup';
@@ -279,7 +280,7 @@ export const useGameBoard = (
   const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null);
 
   const guessingSubmit = () => {
-    if (!guessingSubmitEnabled) return;
+    if (!guessingSubmitEnabled || !savedSetup) return;
 
     const slotTopWordIndices = slotCardIds.map((cardId) => {
       if (cardId === null) return null;
@@ -287,13 +288,45 @@ export const useGameBoard = (
       return primeLookup[cardId]?.topWordIndex ?? null;
     });
 
-    setGuessSubmission({
+    const submission = {
       slotCardIds,
       slotTopWordIndices,
       offboardCardIds,
       edges,
       boardRotation,
+    };
+
+    setGuessSubmission(submission);
+
+    const result = checkGuess(savedSetup, submission);
+
+    // Determine which cards to remove from the board
+    const cardsToRemove: string[] = [];
+    const newSlotCardIds = slotCardIds.map((cardId, i) => {
+      const slotResult = result.slotResults[i];
+      if (slotResult.cardCorrect && slotResult.orientationCorrect) return cardId;
+      if (cardId) cardsToRemove.push(cardId);
+      return null;
     });
+
+    if (cardsToRemove.length === 0) return;
+
+    // Randomize orientation for each removed card
+    setCards((prev) =>
+      prev.map((card) =>
+        cardsToRemove.includes(card.id)
+          ? { ...card, topWordIndex: Math.floor(Math.random() * 4) }
+          : card
+      )
+    );
+    if (cardsToRemove.includes(decoyState.id)) {
+      setDecoyState((prev) => ({ ...prev, topWordIndex: Math.floor(Math.random() * 4) }));
+    }
+
+    setSlotCardIds(newSlotCardIds);
+    setOffboardCardIds((prev) => [...prev, ...cardsToRemove]);
+    const newPositions = getShuffledOffboardPositions(cardsToRemove, boardRect);
+    setOffboardCardPositions((prev) => ({ ...prev, ...newPositions }));
   };
 
   return {
