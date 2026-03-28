@@ -35,13 +35,47 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   );
   const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(cards.map((c) => c.id));
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
+  const [offboardCardPositions, setOffboardCardPositions] = useState<Record<string, { x: number; y: number }>>({});
 
   useEffect(() => {
     if (mode === 'guessing' && savedSetup) {
       setSlotCardIds(savedSetup.cards.map((c) => c.id));
       setOffboardCardIds([decoyCard.id]);
+      setOffboardCardPositions({});
     }
   }, [mode, savedSetup]);
+
+  useEffect(() => {
+    const handleWindowDrop = (event: DragEvent) => {
+      event.preventDefault();
+      if (!event.dataTransfer) return;
+      const payload = event.dataTransfer.getData('application/json');
+      if (!payload) return;
+      const { cardId } = JSON.parse(payload) as { cardId: string };
+      if (!cardId) return;
+
+      if (!mode || mode !== 'guessing') return;
+
+      setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
+      setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
+      setOffboardCardPositions((prev) => ({
+        ...prev,
+        [cardId]: { x: event.clientX, y: event.clientY },
+      }));
+    };
+
+    const handleWindowDragOver = (event: DragEvent) => {
+      event.preventDefault();
+    };
+
+    window.addEventListener('drop', handleWindowDrop);
+    window.addEventListener('dragover', handleWindowDragOver);
+
+    return () => {
+      window.removeEventListener('drop', handleWindowDrop);
+      window.removeEventListener('dragover', handleWindowDragOver);
+    };
+  }, [mode]);
 
   const primeLookup = useMemo<Record<string, CardState>>(() => {
     const base = savedSetup ? savedSetup.cards : cards;
@@ -79,6 +113,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
 
   const handleDropOnSlot = (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => {
     event.preventDefault();
+    event.stopPropagation();
     const payload = event.dataTransfer.getData('application/json');
     if (!payload) return;
     const { cardId } = JSON.parse(payload) as { cardId: string };
@@ -97,12 +132,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       return newSlots;
     });
 
+
     setOffboardCardIds((prevOff) => {
       const withoutDragged = prevOff.filter((id) => id !== cardId);
       if (droppedOutCard) {
         return [...withoutDragged, droppedOutCard];
       }
       return withoutDragged;
+    });
+    setOffboardCardPositions((prev) => {
+      const next = { ...prev };
+      delete next[cardId];
+      return next;
     });
   };
 
@@ -112,6 +153,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     if (!payload) return;
     const { cardId } = JSON.parse(payload) as { cardId: string };
 
+    const x = event.clientX;
+    const y = event.clientY;
+
     setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
     setOffboardCardIds((prev) => {
       if (!prev.includes(cardId)) {
@@ -119,6 +163,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       }
       return prev;
     });
+    setOffboardCardPositions((prev) => ({ ...prev, [cardId]: { x, y } }));
   };
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, cardId: string) => {
@@ -370,25 +415,54 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
               gap: '12px',
               padding: '8px',
               boxSizing: 'border-box',
+              alignItems: 'center',
             }}
           >
             <Text size="sm" fw={500} style={{ width: '100%' }}>
-              Offboard cards (drag to board or keep here)
+              Offboard cards (drag anywhere outside board to place with absolute page position)
             </Text>
+          </div>
+        )}
+
+        {mode === 'guessing' && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              pointerEvents: 'none',
+              zIndex: 1000,
+            }}
+          >
             {offboardCardIds.map((cardId) => {
               const card = primeLookup[cardId] ?? decoyCard;
+              const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
               return (
-                <WordCard
-                  key={`off-${cardId}`}
-                  id={cardId}
-                  words={card.words}
-                  boardRotation={displayRotation}
-                  topWordIndex={card.topWordIndex}
-                  isRotationEnabled={true}
-                  onRotate={(direction) => setCardTopWord(cardId, direction)}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, cardId)}
-                />
+                <div
+                  key={`off-abs-${cardId}`}
+                  style={{
+                    position: 'fixed',
+                    left: Math.max(0, Math.min(window.innerWidth - 320, pos.x - 160)),
+                    top: Math.max(0, Math.min(window.innerHeight - 320, pos.y - 160)),
+                    width: '320px',
+                    height: '320px',
+                    pointerEvents: 'auto',
+                    zIndex: 1001,
+                  }}
+                >
+                  <WordCard
+                    id={cardId}
+                    words={card.words}
+                    boardRotation={displayRotation}
+                    topWordIndex={card.topWordIndex}
+                    isRotationEnabled={true}
+                    onRotate={(direction) => setCardTopWord(cardId, direction)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, cardId)}
+                  />
+                </div>
               );
             })}
           </div>
