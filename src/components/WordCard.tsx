@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { Button } from '@mantine/core';
+import { useCardRotation } from './WordCard/useCardRotation';
 
 interface WordCardProps {
   id?: string;
@@ -26,24 +27,15 @@ const WordCard: React.FC<WordCardProps> = ({
   draggable,
   onDragStart,
 }) => {
-  const [rotation, setRotation] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isRotating, setIsRotating] = useState<boolean>(false);
   const rightWordIndex = (topWordIndex + 1) % 4;
   const bottomWordIndex = (topWordIndex + 2) % 4;
   const leftWordIndex = (topWordIndex + 3) % 4;
 
-  const handleRotate = (direction: 'left' | 'right') => {
-    if (!isRotationEnabled) return;
-    setIsRotating(true);
-    const degrees = direction === 'right' ? 90 : -90;
-    setRotation(degrees);
-    setTimeout(() => {
-      setIsRotating(false);
-      setRotation(0);
-      onRotate?.(direction);
-    }, ROTATION_DURATION);
-  };
+  const { rotation, isHovered, setIsHovered, isRotating, handleRotate } = useCardRotation({
+    isRotationEnabled,
+    onRotate,
+    duration: ROTATION_DURATION,
+  });
 
   const wordStyle: React.CSSProperties = {
     fontSize: '32px',

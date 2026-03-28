@@ -1,7 +1,6 @@
 import React from 'react';
 import { Stack, Text } from '@mantine/core';
-import OffboardCards from './OffboardCards';
-import BoardGrid from './Board/BoardGrid';
+import Board from './Board/Board';
 import { useGameBoard } from './Board/useGameBoard';
 import ModeToggle from './GameBoard/ModeToggle';
 import RotationControls from './GameBoard/RotationControls';
@@ -67,50 +66,28 @@ const GameBoard: React.FC<GameBoardProps> = ({
         />
       </Stack>
 
-      <div
-        ref={boardRef}
-        style={{
-          position: 'relative',
-          width: '760px',
-          height: '760px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'column',
-        }}
-      >
-        <BoardGrid
-          mode={mode}
-          cards={cards}
-          slotCardIds={slotCardIds}
-          primeLookup={primeLookup}
-          decoyState={decoyState}
-          edges={edges}
-          setEdges={setEdges}
-          displayRotation={displayRotation}
-          boardRotation={boardRotation}
-          disableTransition={disableTransition}
-          setDisableTransition={setDisableTransition}
-          boardRect={boardRect}
-          gridRef={gridRef}
-          handleDropOnSlot={handleDropOnSlot}
-          setCardTopWord={setCardTopWord}
-          handleDragStart={handleDragStart}
-        />
-
-        {mode === 'guessing' && (
-          <OffboardCards
-            offboardCardIds={offboardCardIds}
-            primeLookup={primeLookup}
-            decoyState={decoyState}
-            offboardCardPositions={offboardCardPositions}
-            topOffboardCardId={topOffboardCardId}
-            boardRotation={boardRotation}
-            setCardTopWord={setCardTopWord}
-            onDragStart={handleDragStart}
-          />
-        )}
-      </div>
+      <Board
+        mode={mode}
+        boardRef={boardRef}
+        gridRef={gridRef}
+        boardRect={boardRect}
+        displayRotation={displayRotation}
+        boardRotation={boardRotation}
+        disableTransition={disableTransition}
+        setDisableTransition={setDisableTransition}
+        edges={edges}
+        setEdges={setEdges}
+        cards={cards}
+        slotCardIds={slotCardIds}
+        primeLookup={primeLookup}
+        decoyState={decoyState}
+        offboardCardIds={offboardCardIds}
+        offboardCardPositions={offboardCardPositions}
+        topOffboardCardId={topOffboardCardId}
+        setCardTopWord={setCardTopWord}
+        handleDropOnSlot={handleDropOnSlot}
+        handleDragStart={handleDragStart}
+      />
     </Stack>
   );
 };
