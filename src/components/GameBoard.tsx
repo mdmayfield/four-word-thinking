@@ -40,6 +40,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(cards.map((c) => c.id));
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
   const [offboardCardPositions, setOffboardCardPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const [dragOffsets, setDragOffsets] = useState<Record<string, { x: number; y: number }>>({});
+  const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
 
   const getShuffledOffboardPositions = React.useCallback((ids: string[]) => {
@@ -172,12 +174,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
 
       setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
       setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
+
+      const offset = dragOffsets[cardId] || { x: 160, y: 160 };
+      const rawX = event.clientX - offset.x;
+      const rawY = event.clientY - offset.y;
       setOffboardCardPositions((prev) => ({
         ...prev,
-        [cardId]: { x: event.clientX, y: event.clientY },
+        [cardId]: {
+          x: Math.max(0, Math.min(window.innerWidth - 320, rawX)),
+          y: Math.max(0, Math.min(window.innerHeight - 320, rawY)),
+        },
       }));
-    };
 
+      setDragOffsets((prev) => {
+        const next = { ...prev };
+        delete next[cardId];
+        return next;
+      });
+    };
     const handleWindowDragOver = (event: DragEvent) => {
       event.preventDefault();
     };
@@ -296,6 +310,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, cardId: string) => {
     event.dataTransfer.setData('application/json', JSON.stringify({ cardId }));
     event.dataTransfer.effectAllowed = 'move';
+
+    const currentPos = offboardCardPositions[cardId];
+    const offset = currentPos
+      ? { x: event.clientX - currentPos.x, y: event.clientY - currentPos.y }
+      : { x: 160, y: 160 };
+
+    setDragOffsets((prev) => ({
+      ...prev,
+      [cardId]: offset,
+    }));
+
+    setTopOffboardCardId(cardId);
   };
 
   const writingSubmit = () => {
@@ -561,6 +587,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
             {offboardCardIds.map((cardId) => {
               const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
               const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
+              const zIndex = cardId === topOffboardCardId ? 1002 : 1001;
               return (
                 <div
                   key={`off-abs-${cardId}`}
@@ -571,7 +598,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                     width: '320px',
                     height: '320px',
                     pointerEvents: 'auto',
-                    zIndex: 1001,
+                    zIndex,
                   }}
                 >
                   <WordCard
