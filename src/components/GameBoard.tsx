@@ -5,6 +5,7 @@ import { useGameBoard } from './Board/useGameBoard';
 import ModeToggle from './GameBoard/ModeToggle';
 import RotationControls from './GameBoard/RotationControls';
 import ActionControls from './GameBoard/ActionControls';
+import DebugCardList from './GameBoard/DebugCardList';
 import styles from './GameBoard.module.css';
 
 interface GameBoardProps {
@@ -91,6 +92,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
           handleDragStart={handleDragStart}
         />
       </div>
+
+      <DebugCardList mode={mode} cards={cards} decoyState={decoyState} />
     </Stack>
   );
 };
