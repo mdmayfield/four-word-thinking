@@ -317,8 +317,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   };
 
   const writingSubmit = () => {
-    const answer = window.confirm('Save this setup and switch to guessing mode?');
-    if (!answer) return;
+    // const answer = window.confirm('Save this setup and switch to guessing mode?');
+    // if (!answer) return;
 
     const randomizedCards = cards.map((card) => ({
       ...card,
