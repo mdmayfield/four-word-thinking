@@ -233,19 +233,36 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     const { cardId } = JSON.parse(payload) as { cardId: string };
 
     let droppedOutCard: string | null = null;
+    const dropPos = { x: event.clientX, y: event.clientY };
+    const incomingCardOldPos = offboardCardPositions[cardId];
+
     setSlotCardIds((prevSlots) => {
       const newSlots = [...prevSlots];
       const existing = newSlots[targetSlot];
       if (existing === cardId) return prevSlots;
-      if (existing) droppedOutCard = existing;
 
       const sourceSlot = newSlots.findIndex((id) => id === cardId);
-      if (sourceSlot !== -1) newSlots[sourceSlot] = null;
+
+      if (existing && sourceSlot !== -1) {
+        // slot-to-slot swap, no offboard position changes required
+        newSlots[sourceSlot] = existing;
+        newSlots[targetSlot] = cardId;
+        return newSlots;
+      }
+
+      if (existing) {
+        // external -> occupied slot; outgoing card should go to incoming card old position
+        droppedOutCard = existing;
+      }
+
+      if (sourceSlot !== -1) {
+        // moving from another slot to this slot
+        newSlots[sourceSlot] = null;
+      }
 
       newSlots[targetSlot] = cardId;
       return newSlots;
     });
-
 
     setOffboardCardIds((prevOff) => {
       const withoutDragged = prevOff.filter((id) => id !== cardId);
@@ -254,9 +271,22 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       }
       return withoutDragged;
     });
+
     setOffboardCardPositions((prev) => {
       const next = { ...prev };
       delete next[cardId];
+      if (droppedOutCard) {
+        const fallbackPos = {
+          x: Math.max(0, Math.min(window.innerWidth - 320, dropPos.x)),
+          y: Math.max(0, Math.min(window.innerHeight - 320, dropPos.y)),
+        };
+        const targetPos = incomingCardOldPos || fallbackPos;
+
+        next[droppedOutCard] = {
+          x: Math.max(0, Math.min(window.innerWidth - 320, targetPos.x)),
+          y: Math.max(0, Math.min(window.innerHeight - 320, targetPos.y)),
+        };
+      }
       return next;
     });
   };
