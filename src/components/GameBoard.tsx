@@ -155,7 +155,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   };
 
   const writingSubmit = () => {
+    const answer = window.confirm('Save this setup and switch to guessing mode?');
+    if (!answer) return;
+
     setSavedSetup({ edges, cards, boardRotation });
+    setMode('guessing');
   };
 
   const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null);
