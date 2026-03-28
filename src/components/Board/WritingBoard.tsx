@@ -7,20 +7,24 @@ interface WritingBoardProps {
   displayRotation: number;
 }
 
-const WritingBoard: React.FC<WritingBoardProps> = ({ cards, displayRotation }) => (
-  <>
-    {cards.map((card) => (
-      <WordCard
-        key={card.id}
-        id={card.id}
-        words={card.words}
-        boardRotation={displayRotation}
-        topWordIndex={card.topWordIndex}
-        isRotationEnabled={false}
-        onRotate={() => {}}
-      />
-    ))}
-  </>
-);
+const WritingBoard: React.FC<WritingBoardProps> = ({ cards, displayRotation }) => {
+  const boardSteps = ((displayRotation % 360 + 360) % 360) / 90;
+
+  return (
+    <>
+      {cards.map((card) => (
+        <WordCard
+          key={card.id}
+          id={card.id}
+          words={card.words}
+          boardRotation={displayRotation}
+          topWordIndex={(card.topWordIndex + boardSteps) % 4}
+          isRotationEnabled={false}
+          onRotate={() => {}}
+        />
+      ))}
+    </>
+  );
+};
 
 export default WritingBoard;

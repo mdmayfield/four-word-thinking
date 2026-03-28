@@ -143,20 +143,9 @@ export const useGameBoard = (
 
   const setCardTopWord = (cardId: string, direction: 'left' | 'right') => {
     const delta = direction === 'right' ? -1 : 1;
-    const boardSteps = ((boardRotation % 360) + 360) % 360 / 90;
-    const isOnBoard = slotCardIds.some((id) => id === cardId);
-
     const normalize = (x: number) => (x + 4) % 4;
 
-    const updateFn = (topWordIndex: number) => {
-      if (isOnBoard) {
-        return normalize(topWordIndex + delta);
-      }
-
-      const screenTop = normalize(topWordIndex - boardSteps);
-      const newScreenTop = normalize(screenTop + delta);
-      return normalize(newScreenTop + boardSteps);
-    };
+    const updateFn = (topWordIndex: number) => normalize(topWordIndex + delta);
 
     setCards((prev) =>
       prev.map((card) =>

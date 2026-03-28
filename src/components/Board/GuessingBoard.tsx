@@ -41,7 +41,11 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
               id={cardId}
               words={primeLookup[cardId]?.words ?? decoyState.words}
               boardRotation={displayRotation}
-              topWordIndex={primeLookup[cardId]?.topWordIndex ?? decoyState.topWordIndex}
+              topWordIndex={
+                ((primeLookup[cardId]?.topWordIndex ?? decoyState.topWordIndex) +
+                  ((displayRotation % 360 + 360) % 360) / 90) %
+                4
+              }
               isRotationEnabled
               onRotate={(direction) => setCardTopWord(cardId, direction)}
               draggable
