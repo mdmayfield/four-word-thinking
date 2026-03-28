@@ -358,8 +358,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      border: '2px dashed #bbb',
                       boxSizing: 'border-box',
+                      outline: '2px dashed #bbb',
+                      outlineOffset: '-2px',
                     }}
                   >
                     {cardId ? (
