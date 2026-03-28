@@ -609,7 +609,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                         onDragStart={(e) => handleDragStart(e, cardId)}
                       />
                     ) : (
-                      <Text>Drop card here</Text>
+                      <Text
+                        style={{
+                          transform: `rotate(${-displayRotation}deg)`,
+                          transformOrigin: 'center',
+                          transition: 'transform 0.3s ease',
+                        }}
+                      >
+                        Drop card here
+                      </Text>
                     )}
                   </div>
                 );
