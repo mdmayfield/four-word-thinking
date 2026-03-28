@@ -256,7 +256,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       </Center>
 
       <Stack gap="xs" align="center" style={{ width: '100%' }}>
-        <Center>
+        <Center style={{ width: '640px', justifyContent: 'space-between' }}>
           <Button size="xs" onClick={() => rotateBoard('left')} aria-label="Rotate board left">
             <IconArrowBackUp size={16} />
           </Button>
