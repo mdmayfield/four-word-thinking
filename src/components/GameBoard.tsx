@@ -228,6 +228,36 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     setDisableTransition(false);
   };
 
+  const getSlotFromPoint = (clientX: number, clientY: number): number | null => {
+    if (!boardRect) return null;
+
+    const boardSize = 640;
+    const localX = clientX - boardRect.left;
+    const localY = clientY - boardRect.top;
+    const normalized = ((displayRotation % 360) + 360) % 360;
+
+    let x = localX;
+    let y = localY;
+
+    if (normalized === 90) {
+      x = localY;
+      y = boardSize - localX;
+    } else if (normalized === 180) {
+      x = boardSize - localX;
+      y = boardSize - localY;
+    } else if (normalized === 270) {
+      x = boardSize - localY;
+      y = localX;
+    }
+
+    if (x < 0 || y < 0 || x > boardSize || y > boardSize) return null;
+
+    const col = Math.min(1, Math.max(0, Math.floor(x / (boardSize / 2))));
+    const row = Math.min(1, Math.max(0, Math.floor(y / (boardSize / 2))));
+
+    return row * 2 + col;
+  };
+
   const setCardTopWord = (cardId: string, direction: 'left' | 'right') => {
     const delta = direction === 'right' ? -1 : 1;
     setCards((prev) =>
@@ -530,6 +560,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
               setDisplayRotation(boardRotation);
             }
           }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const targetSlot = getSlotFromPoint(e.clientX, e.clientY);
+            if (targetSlot !== null) {
+              handleDropOnSlot(e as React.DragEvent<HTMLDivElement>, targetSlot);
+            }
+          }}
+          onDragOver={(e) => e.preventDefault()}
         >
           {mode === 'writing'
             ? cards.map((card) => (
@@ -612,7 +650,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                   <WordCard
                     id={cardId}
                     words={card.words}
-                    boardRotation={displayRotation}
+                    boardRotation={0}
                     topWordIndex={card.topWordIndex}
                     isRotationEnabled={true}
                     onRotate={(direction) => setCardTopWord(cardId, direction)}

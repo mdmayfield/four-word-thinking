@@ -50,29 +50,28 @@ const WordCard: React.FC<WordCardProps> = ({
     position: 'absolute',
   };
 
-  const normalizedBoardRotation = ((boardRotation % 360) + 360) % 360;
-  const boardSteps = Math.round(normalizedBoardRotation / 90) % 4;
-  const reverseSteps = (4 - boardSteps) % 4;
+  const controlWrapperStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+    transform: `rotate(${-boardRotation}deg)`,
+    transformOrigin: 'center center',
+  };
 
   const buttonStyle: React.CSSProperties = {
     position: 'absolute',
     padding: '5px',
-    zIndex: 1,
+    zIndex: 2,
     opacity: isRotating ? 0 : isHovered ? 1 : 0.1,
-    transition: 'opacity 0.2s'
+    transition: 'opacity 0.2s',
+    pointerEvents: 'auto',
   };
 
-  const iconCounterRotate = `rotate(${-normalizedBoardRotation}deg)`;
-
-  const buttonCorners: React.CSSProperties[] = [
-    { top: '10px', left: '10px' },
-    { top: '10px', right: '10px' },
-    { bottom: '10px', right: '10px' },
-    { bottom: '10px', left: '10px' },
-  ];
-
-  const topLeftButtonStyle = { ...buttonStyle, ...buttonCorners[(0 + reverseSteps) % 4] };
-  const topRightButtonStyle = { ...buttonStyle, ...buttonCorners[(1 + reverseSteps) % 4] };
+  const topLeftButtonStyle = { ...buttonStyle, top: '10px', left: '10px' };
+  const topRightButtonStyle = { ...buttonStyle, top: '10px', right: '10px' };
 
   return (
     <div
@@ -94,13 +93,13 @@ const WordCard: React.FC<WordCardProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {isRotationEnabled && (
-        <>
+        <div style={controlWrapperStyle}>
           <Button
             style={topLeftButtonStyle}
             aria-label="Rotate left"
             onClick={() => handleRotate('left')}
           >
-            <IconArrowBackUp size={24} style={{ transform: iconCounterRotate, display: 'block' }} />
+            <IconArrowBackUp size={24} style={{ display: 'block' }} />
           </Button>
 
           <Button
@@ -108,9 +107,9 @@ const WordCard: React.FC<WordCardProps> = ({
             aria-label="Rotate right"
             onClick={() => handleRotate('right')}
           >
-            <IconArrowForwardUp size={24} style={{ transform: iconCounterRotate, display: 'block' }} />
+            <IconArrowForwardUp size={24} style={{ display: 'block' }} />
           </Button>
-        </>
+        </div>
       )}
 
       <div style={{
