@@ -44,6 +44,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
 
+  const shuffleArray = <T,>(input: T[]): T[] => {
+    const array = [...input];
+    for (let i = array.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  };
+
   const getShuffledOffboardPositions = React.useCallback((ids: string[]) => {
     if (!boardRect) {
       return ids.reduce((acc, id) => ({ ...acc, [id]: { x: 20, y: 20 } }), {} as Record<string, { x: number; y: number }>);
@@ -83,8 +92,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     });
 
 
-    const leftCount = Math.floor(ids.length / 2);
-    const rightCount = ids.length - leftCount;
+    const makeDistribution = () => {
+      const option = Math.random() < 0.5 ? [2, 3] : [3, 2];
+      if (ids.length === 2) return [1, 1];
+      if (ids.length === 3) return [1, 2];
+      if (ids.length === 4) return [2, 2];
+      return option;
+    };
+
+    const [leftCount, rightCount] = makeDistribution();
 
     const arrangeY = (count: number) => {
       if (count === 0) return [] as number[];
@@ -320,7 +336,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     // const answer = window.confirm('Save this setup and switch to guessing mode?');
     // if (!answer) return;
 
-    const randomizedCards = cards.map((card) => ({
+    const shuffledCards = shuffleArray(cards);
+    const randomizedCards = shuffledCards.map((card) => ({
       ...card,
       topWordIndex: Math.floor(Math.random() * 4),
     }));
