@@ -102,6 +102,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
 
     const [leftCount, rightCount] = makeDistribution();
 
+    const shuffledIds = shuffleArray(ids);
+
     const arrangeY = (count: number) => {
       if (count === 0) return [] as number[];
       const totalCardHeight = cardHeight * count;
@@ -128,7 +130,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     let idIndex = 0;
 
     for (let i = 0; i < leftCount; i += 1) {
-      const id = ids[idIndex++];
+      const id = shuffledIds[idIndex++];
       const x = chooseX(leftZoneXMin, leftZoneXMax);
       positions[id] = {
         x,
@@ -137,7 +139,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     }
 
     for (let i = 0; i < rightCount; i += 1) {
-      const id = ids[idIndex++];
+      const id = shuffledIds[idIndex++];
       const x = chooseX(rightZoneXMin, rightZoneXMax);
       positions[id] = {
         x,
@@ -167,7 +169,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     if (mode === 'guessing' && savedSetup && boardRect && !hasInitializedGuessing) {
       setSlotCardIds([null, null, null, null]);
       const ids = savedSetup.cards.map((c) => c.id);
-      const allIds = [...ids, decoyState.id];
+      const allIds = shuffleArray([...ids, decoyState.id]);
       setOffboardCardIds(allIds);
       setOffboardCardPositions(getShuffledOffboardPositions(allIds));
       setHasInitializedGuessing(true);
