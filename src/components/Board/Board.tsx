@@ -77,7 +77,6 @@ const Board: React.FC<BoardProps> = ({
         decoyState={decoyState}
         offboardCardPositions={offboardCardPositions}
         topOffboardCardId={topOffboardCardId}
-        boardRotation={boardRotation}
         setCardTopWord={setCardTopWord}
         onDragStart={handleDragStart}
       />

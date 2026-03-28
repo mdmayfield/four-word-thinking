@@ -11,7 +11,6 @@ interface OffboardCardsProps {
   decoyState: CardState;
   offboardCardPositions: Record<string, { x: number; y: number }>;
   topOffboardCardId: string | null;
-  boardRotation: number;
   setCardTopWord: (cardId: string, direction: Direction) => void;
   onDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
 }
@@ -22,7 +21,6 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
   decoyState,
   offboardCardPositions,
   topOffboardCardId,
-  boardRotation,
   setCardTopWord,
   onDragStart,
 }) => {
@@ -34,8 +32,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
         const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
         const zIndex = cardId === topOffboardCardId ? 1002 : 1001;
 
-        const normalizedTop =
-          (card.topWordIndex - ((boardRotation % 360 + 360) % 360) / 90 + 4) % 4;
+        const normalizedTop = card.topWordIndex;
 
         return (
           <div
