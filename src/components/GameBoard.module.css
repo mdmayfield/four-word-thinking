@@ -1,0 +1,18 @@
+.gameBoardTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.viewportWrapper {
+  position: relative;
+  width: 760px;
+  height: 760px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.controlsContainer {
+  width: 100%;
+}

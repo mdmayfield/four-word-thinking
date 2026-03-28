@@ -5,6 +5,7 @@ import { getSlotFromPoint } from '../gameBoardUtils';
 import { Mode, EdgeTuple } from './types';
 import WritingBoard from './WritingBoard';
 import GuessingBoard from './GuessingBoard';
+import styles from './BoardGrid.module.css';
 
 interface BoardGridProps {
   mode: Mode;
@@ -45,14 +46,8 @@ const BoardGrid: React.FC<BoardGridProps> = ({
 }) => (
   <div
     ref={gridRef}
+    className={styles.gridWrapper}
     style={{
-      position: 'absolute',
-      width: '640px',
-      height: '640px',
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gridTemplateRows: '1fr 1fr',
-      gap: '0px',
       transition: disableTransition ? 'none' : 'transform 0.3s ease',
       transform: `rotate(${displayRotation}deg)`,
     }}
@@ -81,6 +76,8 @@ const BoardGrid: React.FC<BoardGridProps> = ({
         setCardTopWord={setCardTopWord}
         handleDragStart={handleDragStart}
         handleDropOnSlot={handleDropOnSlot}
+        slotClassName={styles.slot}
+        dropTextClassName={styles.dropText}
       />
     )}
 

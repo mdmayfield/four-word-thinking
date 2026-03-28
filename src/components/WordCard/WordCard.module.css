@@ -1,0 +1,41 @@
+.container {
+  width: 320px;
+  height: 320px;
+  border: 2px solid black;
+  background-color: white;
+  position: relative;
+  z-index: 1;
+  cursor: default;
+}
+
+.containerDrag {
+  cursor: grab;
+}
+
+.word {
+  font-size: 32px;
+  position: absolute;
+}
+
+.controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+.buttonBase {
+  position: absolute;
+  padding: 5px;
+  z-index: 2;
+  opacity: 0.1;
+  transition: opacity 0.2s;
+  pointer-events: auto;
+}
+
+.buttonVisible {
+  opacity: 1;
+}

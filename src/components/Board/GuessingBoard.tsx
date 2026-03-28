@@ -11,6 +11,8 @@ interface GuessingBoardProps {
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
+  slotClassName?: string;
+  dropTextClassName?: string;
 }
 
 const GuessingBoard: React.FC<GuessingBoardProps> = ({
@@ -21,6 +23,8 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
   setCardTopWord,
   handleDragStart,
   handleDropOnSlot,
+  slotClassName,
+  dropTextClassName,
 }) => (
   <>
     {[0, 1, 2, 3].map((slot) => {
@@ -30,14 +34,7 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
           key={slot}
           onDrop={(e) => handleDropOnSlot(e, slot)}
           onDragOver={(e) => e.preventDefault()}
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            boxSizing: 'border-box',
-            outline: '2px dashed #bbb',
-            outlineOffset: '-2px',
-          }}
+          className={slotClassName}
         >
           {cardId ? (
             <WordCard
@@ -52,10 +49,10 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
             />
           ) : (
             <Text
+              className={dropTextClassName}
               style={{
                 transform: `rotate(${-displayRotation}deg)`,
                 transformOrigin: 'center',
-                transition: 'transform 0.3s ease',
               }}
             >
               Drop card here

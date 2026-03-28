@@ -3,6 +3,7 @@ import BoardGrid from './BoardGrid';
 import { Mode, EdgeTuple } from './types';
 import { CardState } from '../../hooks/GameStateTypes';
 import OffboardCards from '../OffboardCards';
+import styles from './Board.module.css';
 
 interface BoardProps {
   mode: Mode;
@@ -49,18 +50,7 @@ const Board: React.FC<BoardProps> = ({
   handleDropOnSlot,
   handleDragStart,
 }) => (
-  <div
-    ref={boardRef}
-    style={{
-      position: 'relative',
-      width: '760px',
-      height: '760px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'column',
-    }}
-  >
+  <div ref={boardRef} className={styles.wrapper}>
     <BoardGrid
       mode={mode}
       cards={cards}

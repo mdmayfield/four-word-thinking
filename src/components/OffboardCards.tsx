@@ -1,6 +1,7 @@
 import React from 'react';
 import WordCard from './WordCard';
 import { CardState } from '../hooks/GameStateTypes';
+import styles from './OffboardCards.module.css';
 
 type Direction = 'left' | 'right';
 
@@ -26,17 +27,8 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
   onDragStart,
 }) => {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        pointerEvents: 'none',
-        zIndex: 1000,
-      }}
-    >
+    <div className={styles.offboardRoot}>
+
       {offboardCardIds.map((cardId) => {
         const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
         const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
@@ -48,13 +40,10 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
         return (
           <div
             key={`off-abs-${cardId}`}
+            className={styles.offboardCard}
             style={{
-              position: 'fixed',
               left: Math.max(0, Math.min(window.innerWidth - 320, pos.x)),
               top: Math.max(0, Math.min(window.innerHeight - 320, pos.y)),
-              width: '320px',
-              height: '320px',
-              pointerEvents: 'auto',
               zIndex,
             }}
           >

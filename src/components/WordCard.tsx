@@ -2,6 +2,7 @@ import React from 'react';
 import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { Button } from '@mantine/core';
 import { useCardRotation } from './WordCard/useCardRotation';
+import styles from './WordCard/WordCard.module.css';
 
 interface WordCardProps {
   id?: string;
@@ -42,62 +43,36 @@ const WordCard: React.FC<WordCardProps> = ({
     position: 'absolute',
   };
 
-  const controlWrapperStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-    transform: `rotate(${-boardRotation}deg)`,
-    transformOrigin: 'center center',
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    position: 'absolute',
-    padding: '5px',
-    zIndex: 2,
-    opacity: isRotating ? 0 : isHovered ? 1 : 0.1,
-    transition: 'opacity 0.2s',
-    pointerEvents: 'auto',
-  };
-
-  const topLeftButtonStyle = { ...buttonStyle, top: '10px', left: '10px' };
-  const topRightButtonStyle = { ...buttonStyle, top: '10px', right: '10px' };
-
   return (
     <div
       id={id}
       draggable={draggable}
       onDragStart={onDragStart}
+      className={`${styles.container} ${draggable ? styles.containerDrag : ''}`}
       style={{
-        width: '320px',
-        height: '320px',
-        border: '2px solid black',
-        backgroundColor: 'white',
-        position: 'relative',
         transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
         transform: `rotate(${rotation}deg)`,
         zIndex: isRotating ? 10 : 1,
-        cursor: draggable ? 'grab' : 'default',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {isRotationEnabled && (
-        <div style={controlWrapperStyle}>
+        <div className={styles.controls} style={{ transform: `rotate(${-boardRotation}deg)` }}>
           <Button
-            style={topLeftButtonStyle}
+            className={`${styles.buttonBase} ${isHovered ? styles.buttonVisible : ''}`}
             aria-label="Rotate left"
             onClick={() => handleRotate('left')}
+            style={{ top: '10px', left: '10px' }}
           >
             <IconArrowBackUp size={24} style={{ display: 'block' }} />
           </Button>
 
           <Button
-            style={topRightButtonStyle}
+            className={`${styles.buttonBase} ${isHovered ? styles.buttonVisible : ''}`}
             aria-label="Rotate right"
             onClick={() => handleRotate('right')}
+            style={{ top: '10px', right: '10px' }}
           >
             <IconArrowForwardUp size={24} style={{ display: 'block' }} />
           </Button>
