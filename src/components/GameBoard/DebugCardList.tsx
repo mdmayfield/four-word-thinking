@@ -6,9 +6,12 @@ interface DebugCardListProps {
   mode: Mode;
   cards: CardState[];
   decoyState: CardState;
+  show?: boolean;
 }
 
-const DebugCardList: React.FC<DebugCardListProps> = ({ mode, cards, decoyState }) => {
+const DebugCardList: React.FC<DebugCardListProps> = ({ mode, cards, decoyState, show = false }) => {
+  if (!show) return null;
+
   const listWords = (card: CardState) => (
     <ul style={{ margin: 0, paddingLeft: '1rem', textAlign: 'left' }}>
       {card.words.map((word, i) => (

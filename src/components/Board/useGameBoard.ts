@@ -281,15 +281,19 @@ export const useGameBoard = (
   const guessingSubmit = () => {
     if (!guessingSubmitEnabled) return;
 
-    const payload = {
+    const slotTopWordIndices = slotCardIds.map((cardId) => {
+      if (cardId === null) return null;
+      if (cardId === decoyState.id) return decoyState.topWordIndex;
+      return primeLookup[cardId]?.topWordIndex ?? null;
+    });
+
+    setGuessSubmission({
       slotCardIds,
+      slotTopWordIndices,
       offboardCardIds,
       edges,
       boardRotation,
-    };
-
-    setGuessSubmission(payload);
-    console.log('Guess submit payload', payload);
+    });
   };
 
   return {

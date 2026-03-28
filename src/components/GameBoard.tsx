@@ -6,6 +6,9 @@ import ModeToggle from './GameBoard/ModeToggle';
 import RotationControls from './GameBoard/RotationControls';
 import ActionControls from './GameBoard/ActionControls';
 import DebugCardList from './GameBoard/DebugCardList';
+import GuessResultDisplay from './GameBoard/GuessResultDisplay';
+import { useGameState } from '../hooks/GameStateContext';
+import { checkGuess } from '../utils/checkGuess';
 import styles from './GameBoard.module.css';
 
 interface GameBoardProps {
@@ -22,6 +25,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
   cardWords,
   initialEdges = ['Top', 'Right', 'Bottom', 'Left'] as const,
 }) => {
+  const { savedSetup, guessSubmission } = useGameState();
+  const guessResult =
+    savedSetup && guessSubmission ? checkGuess(savedSetup, guessSubmission) : null;
+
   const {
     mode,
     setMode,
@@ -93,7 +100,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
         />
       </div>
 
-      <DebugCardList mode={mode} cards={cards} decoyState={decoyState} />
+      <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={false} />
+
+      {guessResult && <GuessResultDisplay result={guessResult} />}
     </Stack>
   );
 };
