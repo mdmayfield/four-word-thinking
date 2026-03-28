@@ -40,7 +40,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
   const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(cards.map((c) => c.id));
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
   const [offboardCardPositions, setOffboardCardPositions] = useState<Record<string, { x: number; y: number }>>({});
-  const [dragOffsets, setDragOffsets] = useState<Record<string, { x: number; y: number }>>({});
+  const dragOffsetsRef = React.useRef<Record<string, { x: number; y: number }>>({});
   const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
 
@@ -175,7 +175,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
       setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
 
-      const offset = dragOffsets[cardId] || { x: 160, y: 160 };
+      const offset = dragOffsetsRef.current[cardId] || { x: 160, y: 160 };
       const rawX = event.clientX - offset.x;
       const rawY = event.clientY - offset.y;
       setOffboardCardPositions((prev) => ({
@@ -186,11 +186,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
         },
       }));
 
-      setDragOffsets((prev) => {
-        const next = { ...prev };
-        delete next[cardId];
-        return next;
-      });
+      delete dragOffsetsRef.current[cardId];
     };
     const handleWindowDragOver = (event: DragEvent) => {
       event.preventDefault();
@@ -316,11 +312,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
       ? { x: event.clientX - currentPos.x, y: event.clientY - currentPos.y }
       : { x: 160, y: 160 };
 
-    setDragOffsets((prev) => ({
-      ...prev,
-      [cardId]: offset,
-    }));
-
+    dragOffsetsRef.current[cardId] = offset;
     setTopOffboardCardId(cardId);
   };
 
