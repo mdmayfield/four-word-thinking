@@ -7,10 +7,10 @@ function App() {
       <Stack align="center" gap="xl">
         <Title>Four-Word Thinking</Title>
         <SimpleGrid cols={2} spacing="none">
-          <WordCard words={["red", "blue", "green", "yellow"]} />
-          <WordCard words={["cat", "dog", "bird", "fish"]} />
-          <WordCard words={["run", "jump", "skip", "hop"]} />
-          <WordCard words={["hot", "cold", "warm", "cool"]} />
+          <WordCard words={["Console", "Voice", "Recipient", "Cell"]} />
+          <WordCard words={["Thunder", "Straw", "Religion", "Promotion"]} />
+          <WordCard words={["Padlock", "Inside", "Astronaut", "Fish"]} />
+          <WordCard words={["Finger", "Note", "Hard", "Kitchen"]} />
         </SimpleGrid>
       </Stack>
     </Box>
