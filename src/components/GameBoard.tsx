@@ -258,17 +258,28 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     return row * 2 + col;
   };
 
-  const boardRotationSteps = ((displayRotation % 360) + 360) % 360 / 90;
-
-  const screenTopIndexFromBoard = (boardTopIndex: number) =>
-    (boardTopIndex - boardRotationSteps + 4) % 4;
-
   const setCardTopWord = (cardId: string, direction: 'left' | 'right') => {
     const delta = direction === 'right' ? -1 : 1;
+    const boardSteps = ((boardRotation % 360) + 360) % 360 / 90;
+
+    const isOnBoard = slotCardIds.some((id) => id === cardId);
+
+    const normalize = (x: number) => (x + 4) % 4;
+
+    const updateFn = (topWordIndex: number) => {
+      if (isOnBoard) {
+        return normalize(topWordIndex + delta);
+      }
+      // offboard: user rotates card in screen coordinates
+      const screenTop = normalize(topWordIndex - boardSteps);
+      const newScreenTop = normalize(screenTop + delta);
+      return normalize(newScreenTop + boardSteps);
+    };
+
     setCards((prev) =>
       prev.map((card) =>
         card.id === cardId
-          ? { ...card, topWordIndex: (card.topWordIndex + delta + 4) % 4 }
+          ? { ...card, topWordIndex: updateFn(card.topWordIndex) }
           : card
       )
     );
@@ -278,7 +289,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
         ...savedSetup,
         cards: savedSetup.cards.map((card) =>
           card.id === cardId
-            ? { ...card, topWordIndex: (card.topWordIndex + delta + 4) % 4 }
+            ? { ...card, topWordIndex: updateFn(card.topWordIndex) }
             : card
         ),
       });
@@ -296,12 +307,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
     const dropPos = { x: event.clientX, y: event.clientY };
     const incomingCardOldPos = offboardCardPositions[cardId];
 
+    const sourceSlot = slotCardIds.findIndex((id) => id === cardId);
+
     setSlotCardIds((prevSlots) => {
       const newSlots = [...prevSlots];
       const existing = newSlots[targetSlot];
       if (existing === cardId) return prevSlots;
-
-      const sourceSlot = newSlots.findIndex((id) => id === cardId);
 
       if (existing && sourceSlot !== -1) {
         // slot-to-slot swap, no offboard position changes required
@@ -647,7 +658,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
               const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
               const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };
               const zIndex = cardId === topOffboardCardId ? 1002 : 1001;
-              const screenTop = screenTopIndexFromBoard(card.topWordIndex);
               return (
                 <div
                   key={`off-abs-${cardId}`}
@@ -665,7 +675,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ cardWords, initialEdges = ['Top',
                     id={cardId}
                     words={card.words}
                     boardRotation={0}
-                    topWordIndex={screenTop}
+                    topWordIndex={(card.topWordIndex - ((boardRotation % 360 + 360) % 360) / 90 + 4) % 4}
                     isRotationEnabled={true}
                     onRotate={(direction) => setCardTopWord(cardId, direction)}
                     draggable
