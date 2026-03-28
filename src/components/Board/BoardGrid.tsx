@@ -1,7 +1,8 @@
 import React from 'react';
 import EdgeInputs from '../EdgeInputs';
 import { CardState } from '../../hooks/GameStateTypes';
-import { Mode, getSlotFromPoint } from '../gameBoardUtils';
+import { getSlotFromPoint } from '../gameBoardUtils';
+import { Mode, EdgeTuple } from './types';
 import WritingBoard from './WritingBoard';
 import GuessingBoard from './GuessingBoard';
 
@@ -11,8 +12,8 @@ interface BoardGridProps {
   slotCardIds: (string | null)[];
   primeLookup: Record<string, CardState>;
   decoyState: CardState;
-  edges: readonly [string, string, string, string];
-  setEdges: React.Dispatch<React.SetStateAction<readonly [string, string, string, string]>>;
+  edges: EdgeTuple;
+  setEdges: React.Dispatch<React.SetStateAction<EdgeTuple>>;
   displayRotation: number;
   boardRotation: number;
   disableTransition: boolean;

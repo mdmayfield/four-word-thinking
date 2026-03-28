@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mode } from './gameBoardUtils';
+import { Mode } from './Board/types';
 
 type EdgeTuple = readonly [string, string, string, string];
 

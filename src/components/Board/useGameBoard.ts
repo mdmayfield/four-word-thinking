@@ -1,16 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useGameState } from '../../hooks/GameStateContext';
 import { CardState } from '../../hooks/GameStateTypes';
-import {
-  Mode,
-  baseDecoy,
-  shuffleArray,
-} from '../gameBoardUtils';
+import { baseDecoy, shuffleArray } from '../gameBoardUtils';
+import { Mode, EdgeTuple } from './types';
 import { useBoardDimensions } from './useBoardDimensions';
 import { useGuessingSetup } from './useGuessingSetup';
 import { useWindowDropHandlers } from './useWindowDropHandlers';
-
-export type EdgeTuple = readonly [string, string, string, string];
 
 interface UseGameBoardResult {
   mode: Mode;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Stack } from '@mantine/core';
-import { Mode } from '../gameBoardUtils';
+import { Mode } from '../Board/types';
 
 interface ActionControlsProps {
   mode: Mode;

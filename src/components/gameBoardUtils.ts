@@ -1,7 +1,5 @@
 import { CardState } from '../hooks/GameStateTypes';
 
-export type Mode = 'writing' | 'guessing';
-
 export const baseDecoy: CardState = {
   id: 'decoy',
   words: ['Decoy', 'Bait', 'Lure', 'Trap'],
