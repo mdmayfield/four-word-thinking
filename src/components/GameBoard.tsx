@@ -102,6 +102,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const pendingTouchDragRef = useRef<PendingTouchDrag | null>(null);
   const [activeTouchDrag, setActiveTouchDrag] = useState<ActiveTouchDrag | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSaveCluesModalOpen, setIsSaveCluesModalOpen] = useState(false);
   const [invalidLinkModalOpen, setInvalidLinkModalOpen] = useState(hasInvalidSharedPuzzle);
   const [copyLabel, setCopyLabel] = useState('Copy Link');
   const [qrSize, setQrSize] = useState(280);
@@ -450,8 +451,41 @@ const GameBoard: React.FC<GameBoardProps> = ({
     window.history.replaceState(null, '', cleanUrl);
   };
 
+  const handleCompleteEdgeEntry = () => {
+    if (mode !== 'writing') return;
+    if (!edges.every((edge) => edge.trim().length > 0)) return;
+    setIsSaveCluesModalOpen(true);
+  };
+
   return (
     <>
+      <Modal
+        opened={isSaveCluesModalOpen}
+        onClose={() => setIsSaveCluesModalOpen(false)}
+        title="Create puzzle"
+        size="sm"
+        yOffset="12vh"
+      >
+        <Stack gap="md">
+          <Text>Save clues and create puzzle?</Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setIsSaveCluesModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              data-autofocus
+              onClick={() => {
+                setIsSaveCluesModalOpen(false);
+                writingSubmit();
+              }}
+              disabled={!edges.every((edge) => edge.trim().length > 0)}
+            >
+              Save Clues
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       <Modal
         opened={invalidLinkModalOpen}
         onClose={() => {
@@ -535,6 +569,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             edges={edges}
             setEdges={setEdges}
             onEdgeFocus={handleEdgeFocus}
+            onCompleteEdgeEntry={handleCompleteEdgeEntry}
             focusEdgeIndex={focusEdgeIndex}
             focusRequestId={focusRequestId}
             cards={cards}

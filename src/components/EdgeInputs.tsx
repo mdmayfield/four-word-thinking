@@ -9,6 +9,7 @@ interface EdgeInputsProps {
   setEdges: React.Dispatch<React.SetStateAction<EdgeTuple>>;
   mode: Mode;
   onEdgeFocus?: (edgeIndex: number) => void;
+  onCompleteEnter?: () => void;
   focusEdgeIndex?: number | null;
   focusRequestId?: number;
 }
@@ -18,17 +19,18 @@ const EdgeInputs: React.FC<EdgeInputsProps> = ({
   setEdges,
   mode,
   onEdgeFocus,
+  onCompleteEnter,
   focusEdgeIndex,
   focusRequestId,
 }) => {
   const [top, right, bottom, left] = edges;
   const inputValues = [top, right, bottom, left];
-  const inputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const inputRefs = useRef([
+    React.createRef<HTMLInputElement>(),
+    React.createRef<HTMLInputElement>(),
+    React.createRef<HTMLInputElement>(),
+    React.createRef<HTMLInputElement>(),
+  ]).current;
 
   const handleBlur = (index: number) => {
     const trimmed = inputValues[index].trim();
@@ -42,6 +44,12 @@ const EdgeInputs: React.FC<EdgeInputsProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+
+      if (inputValues.every((value) => value.trim().length > 0) && onCompleteEnter) {
+        onCompleteEnter();
+        return;
+      }
+
       inputRefs[(index + 1) % 4].current?.focus();
     }
   };
@@ -50,7 +58,7 @@ const EdgeInputs: React.FC<EdgeInputsProps> = ({
     if (focusEdgeIndex != null) {
       inputRefs[focusEdgeIndex].current?.focus();
     }
-  }, [focusEdgeIndex, focusRequestId]);
+  }, [focusEdgeIndex, focusRequestId, inputRefs]);
 
   return (
     <>

@@ -16,6 +16,7 @@ interface BoardGridProps {
   edges: EdgeTuple;
   setEdges: React.Dispatch<React.SetStateAction<EdgeTuple>>;
   onEdgeFocus?: (edgeIndex: number) => void;
+  onCompleteEdgeEntry?: () => void;
   focusEdgeIndex?: number | null;
   focusRequestId?: number;
   displayRotation: number;
@@ -62,6 +63,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
   edges,
   setEdges,
   onEdgeFocus,
+  onCompleteEdgeEntry,
   focusEdgeIndex,
   focusRequestId,
   correctSlots,
@@ -122,6 +124,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
       setEdges={setEdges}
       mode={mode}
       onEdgeFocus={onEdgeFocus}
+      onCompleteEnter={onCompleteEdgeEntry}
       focusEdgeIndex={focusEdgeIndex}
       focusRequestId={focusRequestId}
     />
