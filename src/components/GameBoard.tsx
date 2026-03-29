@@ -308,14 +308,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
     >
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
+      {isMobile && mode === 'guessing' && actionControls}
+
       <RotationControls
         boardRotation={boardRotation}
         rotateBoard={handleRotateBoard}
         showLabel={DEBUG}
         boardScale={boardScale}
       />
-
-      {isMobile && mode === 'guessing' && actionControls}
 
       <div
         className={styles.scaleFrame}
