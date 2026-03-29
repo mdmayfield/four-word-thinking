@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Stack } from '@mantine/core';
+import { Button } from '@mantine/core';
 import { Mode } from '../Board/types';
 
 interface ActionControlsProps {
@@ -14,7 +14,8 @@ interface ActionControlsProps {
   giveUpEnabled: boolean;
 }
 
-const ActionControls: React.FC<ActionControlsProps> = ({
+/** The primary action button (Save Clues / Submit Guess / Next Round). */
+export const PrimaryActionButton: React.FC<ActionControlsProps> = ({
   mode,
   onWritingSubmit,
   writingSubmitEnabled,
@@ -22,29 +23,34 @@ const ActionControls: React.FC<ActionControlsProps> = ({
   guessingSubmitEnabled,
   isWon,
   onNextRound,
+}) => {
+  if (mode === 'writing') {
+    return (
+      <Button onClick={onWritingSubmit} size="sm" disabled={!writingSubmitEnabled}>
+        Save Clues
+      </Button>
+    );
+  }
+  if (isWon) {
+    return (
+      <Button onClick={onNextRound} size="sm" color="green">
+        Next Round
+      </Button>
+    );
+  }
+  return (
+    <Button onClick={onGuessingSubmit} size="sm" disabled={!guessingSubmitEnabled}>
+      Submit Guess
+    </Button>
+  );
+};
+
+/** Give Up button — shown separately below the board. */
+export const GiveUpButton: React.FC<Pick<ActionControlsProps, 'onGiveUp' | 'giveUpEnabled'>> = ({
   onGiveUp,
   giveUpEnabled,
 }) => (
-  <Stack gap="xs" align="center" style={{ width: '100%' }}>
-    {mode === 'writing' ? (
-      <Button onClick={onWritingSubmit} size="sm" mt="xs" disabled={!writingSubmitEnabled}>
-        Save Clues
-      </Button>
-    ) : isWon ? (
-      <Button onClick={onNextRound} size="sm" mt="xs" color="green">
-        Next Round
-      </Button>
-    ) : (
-      <>
-        <Button onClick={onGuessingSubmit} size="sm" mt="xs" disabled={!guessingSubmitEnabled}>
-          Submit Guess
-        </Button>
-        <Button onClick={onGiveUp} size="sm" color="red" disabled={!giveUpEnabled}>
-          Give Up
-        </Button>
-      </>
-    )}
-  </Stack>
+  <Button onClick={onGiveUp} size="sm" color="red" disabled={!giveUpEnabled}>
+    Give Up
+  </Button>
 );
-
-export default ActionControls;

@@ -7,6 +7,7 @@ interface RotationControlsProps {
   rotateBoard: (direction: 'left' | 'right') => void;
   showLabel?: boolean;
   boardScale?: number;
+  centerContent?: React.ReactNode;
 }
 
 const RotationControls: React.FC<RotationControlsProps> = ({
@@ -14,12 +15,13 @@ const RotationControls: React.FC<RotationControlsProps> = ({
   rotateBoard,
   showLabel = false,
   boardScale = 1,
+  centerContent,
 }) => (
   <Center style={{ width: `${640 * boardScale}px`, justifyContent: 'space-between', maxWidth: '100%' }}>
     <Button size="xs" onClick={() => rotateBoard('left')} aria-label="Rotate board left">
       <IconArrowBackUp size={16} />
     </Button>
-    {showLabel && <Text mx="xs">Board Rotation: {boardRotation}°</Text>}
+    {centerContent ?? (showLabel && <Text mx="xs">Board Rotation: {boardRotation}°</Text>)}
     <Button size="xs" onClick={() => rotateBoard('right')} aria-label="Rotate board right">
       <IconArrowForwardUp size={16} />
     </Button>

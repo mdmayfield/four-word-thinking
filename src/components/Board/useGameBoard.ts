@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../hooks/GameStateContext';
 import { CardState } from '../../hooks/GameStateTypes';
-import { shuffleArray, placeEjectedCards } from '../gameBoardUtils';
+import { shuffleArray, placeEjectedCards, getShuffledOffboardPositions } from '../gameBoardUtils';
 import { generateCardSet } from '../../utils/generateCards';
 import { checkGuess } from '../../utils/checkGuess';
 import { Mode, EdgeTuple } from './types';
@@ -47,6 +47,7 @@ interface UseGameBoardResult {
   writingSubmit: () => void;
   guessingSubmit: () => void;
   nextRound: () => void;
+  reshuffleOffboardCards: () => void;
 }
 
 export const useGameBoard = (
@@ -373,7 +374,9 @@ export const useGameBoard = (
   const writingSubmit = () => {
     setSelectedCardId(null);
     setDraggingCardId(null);
-    setSavedSetup({ edges, cards: cards.map((c) => ({ ...c })), boardRotation });
+    const trimmedEdges = edges.map((e) => e.trim()) as unknown as typeof edges;
+    setEdges(trimmedEdges);
+    setSavedSetup({ edges: trimmedEdges, cards: cards.map((c) => ({ ...c })), boardRotation });
 
     const shuffledCards = shuffleArray(cards);
     const randomizedCards = shuffledCards.map((card) => ({
@@ -470,6 +473,12 @@ export const useGameBoard = (
     setOffboardCardPositions((prev) => ({ ...prev, ...newPositions }));
   };
 
+  const reshuffleOffboardCards = () => {
+    if (offboardCardIds.length === 0) return;
+    const newPositions = getShuffledOffboardPositions(offboardCardIds, boardRect);
+    setOffboardCardPositions(newPositions);
+  };
+
   return {
     mode,
     setMode,
@@ -508,5 +517,6 @@ export const useGameBoard = (
     writingSubmit,
     guessingSubmit,
     nextRound,
+    reshuffleOffboardCards,
   };
 };

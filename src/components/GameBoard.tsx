@@ -5,7 +5,7 @@ import Board from './Board/Board';
 import { useGameBoard } from './Board/useGameBoard';
 import ModeToggle from './GameBoard/ModeToggle';
 import RotationControls from './GameBoard/RotationControls';
-import ActionControls from './GameBoard/ActionControls';
+import { PrimaryActionButton, GiveUpButton } from './GameBoard/ActionControls';
 import DebugCardList from './GameBoard/DebugCardList';
 import GuessResultDisplay from './GameBoard/GuessResultDisplay';
 import OffboardCards from './OffboardCards';
@@ -88,6 +88,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     handleSlotClick,
     draggingCardId,
     clearDragState,
+    reshuffleOffboardCards,
   } = useGameBoard(wordBank, initialEdges, isMobile);
 
   const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
@@ -111,6 +112,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
     window.addEventListener('dragend', clearDragState);
     return () => window.removeEventListener('dragend', clearDragState);
   }, [clearDragState]);
+
+  // When switching from mobile to desktop, reshuffle any off-board cards into desktop positions
+  const prevIsMobileRef = useRef(isMobile);
+  useEffect(() => {
+    if (prevIsMobileRef.current && !isMobile) {
+      reshuffleOffboardCards();
+    }
+    prevIsMobileRef.current = isMobile;
+  }, [isMobile, reshuffleOffboardCards]);
 
   const requestEdgeFocus = (edgeIndex: number) => {
     setFocusEdgeIndex(edgeIndex);
@@ -309,19 +319,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
       : primeLookup[activeTouchDrag.cardId] ?? null
     : null;
   const touchPreviewRotation = activeTouchDrag?.source === 'board' ? boardRotation : 0;
-  const actionControls = (
-    <ActionControls
-      mode={mode}
-      onWritingSubmit={writingSubmit}
-      writingSubmitEnabled={edges.every((e) => e.length > 0)}
-      onGuessingSubmit={guessingSubmit}
-      guessingSubmitEnabled={guessingSubmitEnabled}
-      isWon={correctSlots.length === 4}
-      onNextRound={nextRound}
-      onGiveUp={nextRound}
-      giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
-    />
-  );
 
   // Background click: deselect or eject selected board card to click position
   const handleBackgroundClick = (e: React.MouseEvent) => {
@@ -360,13 +357,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
     >
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
-      {isMobile && mode === 'guessing' && actionControls}
-
       <RotationControls
         boardRotation={boardRotation}
         rotateBoard={handleRotateBoard}
         showLabel={DEBUG}
         boardScale={boardScale}
+        centerContent={
+          <PrimaryActionButton
+            mode={mode}
+            onWritingSubmit={writingSubmit}
+            writingSubmitEnabled={edges.every((e) => e.trim().length > 0)}
+            onGuessingSubmit={guessingSubmit}
+            guessingSubmitEnabled={guessingSubmitEnabled}
+            isWon={correctSlots.length === 4}
+            onNextRound={nextRound}
+            onGiveUp={nextRound}
+            giveUpEnabled={false}
+          />
+        }
       />
 
       <div
@@ -473,7 +481,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </div>
       )}
 
-      {(!isMobile || mode !== 'guessing') && actionControls}
+      {mode === 'guessing' && correctSlots.length < 4 && !slotCardIds.every((id) => id !== null) && (
+        <GiveUpButton
+          onGiveUp={nextRound}
+          giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
+        />
+      )}
 
       <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={DEBUG} />
 

@@ -32,6 +32,22 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #aaa transparent;
+  padding-bottom: 20px;
+}
+
+.mobileTray::-webkit-scrollbar {
+  height: 6px;
+}
+
+.mobileTray::-webkit-scrollbar-thumb {
+  background: #aaa;
+  border-radius: 3px;
+}
+
+.mobileTray::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .mobileCardShell {
