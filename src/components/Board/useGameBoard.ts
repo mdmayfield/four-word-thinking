@@ -30,6 +30,7 @@ interface UseGameBoardResult {
   guessingSubmitEnabled: boolean;
   primeLookup: Record<string, CardState>;
   rotateBoard: (direction: 'left' | 'right') => void;
+  rotateBoardTo: (targetBoardRotation: number) => void;
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
@@ -108,6 +109,16 @@ export const useGameBoard = (
     const delta = direction === 'right' ? 90 : -90;
     setBoardRotation((prev) => (prev + delta + 360) % 360);
     setDisplayRotation((prev) => prev + delta);
+    setDisableTransition(false);
+  };
+
+  const rotateBoardTo = (targetBoardRotation: number) => {
+    const normalized = ((targetBoardRotation % 360) + 360) % 360;
+    const deltaCw = (normalized - boardRotation + 360) % 360;
+    const shortestDelta = deltaCw > 180 ? deltaCw - 360 : deltaCw;
+    if (shortestDelta === 0) return;
+    setBoardRotation(normalized);
+    setDisplayRotation((prev) => prev + shortestDelta);
     setDisableTransition(false);
   };
 
@@ -383,6 +394,7 @@ export const useGameBoard = (
     guessingSubmitEnabled,
     primeLookup,
     rotateBoard,
+    rotateBoardTo,
     setCardTopWord,
     correctSlots,
     isWon,

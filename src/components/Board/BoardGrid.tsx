@@ -15,6 +15,7 @@ interface BoardGridProps {
   decoyState: CardState;
   edges: EdgeTuple;
   setEdges: React.Dispatch<React.SetStateAction<EdgeTuple>>;
+  onEdgeFocus?: (edgeIndex: number) => void;
   displayRotation: number;
   boardRotation: number;
   disableTransition: boolean;
@@ -44,6 +45,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
   handleDragStart,
   edges,
   setEdges,
+  onEdgeFocus,
   correctSlots,
 }) => (
   <div
@@ -84,7 +86,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
       />
     )}
 
-    <EdgeInputs edges={edges} setEdges={setEdges} mode={mode} />
+    <EdgeInputs edges={edges} setEdges={setEdges} mode={mode} onEdgeFocus={onEdgeFocus} />
   </div>
 );
 

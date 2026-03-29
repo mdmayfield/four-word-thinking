@@ -48,6 +48,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     guessingSubmitEnabled,
     primeLookup,
     rotateBoard,
+    rotateBoardTo,
     setCardTopWord,
     correctSlots,
     handleDropOnSlot,
@@ -56,6 +57,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
     guessingSubmit,
     nextRound,
   } = useGameBoard(wordBank, initialEdges);
+
+  const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
+  const handleEdgeFocus = (edgeIndex: number) =>
+    rotateBoardTo(EDGE_TARGET_ROTATIONS[edgeIndex]);
 
   useEffect(() => {
     if (correctSlots.length === 4) {
@@ -81,6 +86,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           setDisableTransition={setDisableTransition}
           edges={edges}
           setEdges={setEdges}
+          onEdgeFocus={handleEdgeFocus}
           cards={cards}
           slotCardIds={slotCardIds}
           primeLookup={primeLookup}
