@@ -13,6 +13,21 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+[draggable='true'] {
+  touch-action: none;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

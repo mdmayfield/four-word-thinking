@@ -5,10 +5,13 @@
 
 .viewportWrapper {
   position: relative;
-  width: 760px;
-  height: 760px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+
+.scaleFrame {
+  position: relative;
+  flex-shrink: 0;
 }

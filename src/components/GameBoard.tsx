@@ -8,8 +8,10 @@ import RotationControls from './GameBoard/RotationControls';
 import ActionControls from './GameBoard/ActionControls';
 import DebugCardList from './GameBoard/DebugCardList';
 import GuessResultDisplay from './GameBoard/GuessResultDisplay';
+import OffboardCards from './OffboardCards';
 import { useGameState } from '../hooks/GameStateContext';
 import { checkGuess } from '../utils/checkGuess';
+import { useBoardScale } from '../hooks/useBoardScale';
 import styles from './GameBoard.module.css';
 
 const DEBUG = false; // import.meta.env.DEV;
@@ -26,6 +28,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const { savedSetup, guessSubmission } = useGameState();
   const guessResult =
     savedSetup && guessSubmission ? checkGuess(savedSetup, guessSubmission) : null;
+  const { boardScale, isMobile } = useBoardScale();
 
   const {
     mode,
@@ -56,7 +59,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     writingSubmit,
     guessingSubmit,
     nextRound,
-  } = useGameBoard(wordBank, initialEdges);
+  } = useGameBoard(wordBank, initialEdges, isMobile);
 
   const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
   const [focusEdgeIndex, setFocusEdgeIndex] = useState<number | null>(null);
@@ -92,40 +95,74 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [mode]);
 
+  const trayPadding = isMobile ? Math.ceil(320 * boardScale) + 48 : 24;
+
   return (
-    <Stack align="center" gap="xl" style={{ minHeight: '100vh', justifyContent: 'center' }}>
+    <Stack
+      align="center"
+      gap="xl"
+      style={{
+        minHeight: '100dvh',
+        justifyContent: isMobile ? 'flex-start' : 'center',
+        padding: `16px 16px ${trayPadding}px`,
+      }}
+    >
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
-      <RotationControls boardRotation={boardRotation} rotateBoard={handleRotateBoard} showLabel={DEBUG} />
+      <RotationControls
+        boardRotation={boardRotation}
+        rotateBoard={handleRotateBoard}
+        showLabel={DEBUG}
+        boardScale={boardScale}
+      />
 
-      <div className={styles.viewportWrapper}>
-        <Board
-          mode={mode}
-          boardRef={boardRef}
-          gridRef={gridRef}
-          boardRect={boardRect}
-          displayRotation={displayRotation}
-          boardRotation={boardRotation}
-          disableTransition={disableTransition}
-          setDisableTransition={setDisableTransition}
-          edges={edges}
-          setEdges={setEdges}
-          onEdgeFocus={handleEdgeFocus}
-          focusEdgeIndex={focusEdgeIndex}
-          focusRequestId={focusRequestId}
-          cards={cards}
-          slotCardIds={slotCardIds}
+      <div
+        className={styles.scaleFrame}
+        style={{ width: 760 * boardScale, height: 760 * boardScale }}
+      >
+        <div
+          className={styles.viewportWrapper}
+          style={{ transform: `scale(${boardScale})`, transformOrigin: 'top left' }}
+        >
+          <Board
+            mode={mode}
+            boardRef={boardRef}
+            gridRef={gridRef}
+            boardRect={boardRect}
+            displayRotation={displayRotation}
+            boardRotation={boardRotation}
+            disableTransition={disableTransition}
+            setDisableTransition={setDisableTransition}
+            edges={edges}
+            setEdges={setEdges}
+            onEdgeFocus={handleEdgeFocus}
+            focusEdgeIndex={focusEdgeIndex}
+            focusRequestId={focusRequestId}
+            cards={cards}
+            slotCardIds={slotCardIds}
+            primeLookup={primeLookup}
+            decoyState={decoyState}
+            setCardTopWord={setCardTopWord}
+            handleDropOnSlot={handleDropOnSlot}
+            handleDragStart={handleDragStart}
+            correctSlots={correctSlots}
+          />
+        </div>
+      </div>
+
+      {mode === 'guessing' && (
+        <OffboardCards
+          offboardCardIds={offboardCardIds}
           primeLookup={primeLookup}
           decoyState={decoyState}
-          offboardCardIds={offboardCardIds}
           offboardCardPositions={offboardCardPositions}
           topOffboardCardId={topOffboardCardId}
           setCardTopWord={setCardTopWord}
-          handleDropOnSlot={handleDropOnSlot}
-          handleDragStart={handleDragStart}
-          correctSlots={correctSlots}
+          onDragStart={handleDragStart}
+          boardScale={boardScale}
+          isMobile={isMobile}
         />
-      </div>
+      )}
 
       <ActionControls
         mode={mode}

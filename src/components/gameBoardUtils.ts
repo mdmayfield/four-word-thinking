@@ -49,7 +49,8 @@ const nudgeToFit = (
 export const getShuffledOffboardPositions = (
   ids: string[],
   boardRect: DOMRect | null,
-  existingPositions: Record<string, { x: number; y: number }> = {}
+  existingPositions: Record<string, { x: number; y: number }> = {},
+  cardSize = 320
 ): Record<string, { x: number; y: number }> => {
   if (!boardRect) {
     return ids.reduce(
@@ -60,8 +61,8 @@ export const getShuffledOffboardPositions = (
 
   const windowW = window.innerWidth;
   const windowH = window.innerHeight;
-  const cardWidth = 320;
-  const cardHeight = 320;
+  const cardWidth = cardSize;
+  const cardHeight = cardSize;
   const sideMargin = 20;
 
   const innerBoardWidth = 640;
@@ -141,14 +142,15 @@ export const getShuffledOffboardPositions = (
 export const placeEjectedCards = (
   ids: string[],
   boardRect: DOMRect | null,
-  existingPositions: Record<string, { x: number; y: number }>
+  existingPositions: Record<string, { x: number; y: number }>,
+  cardSize = 320
 ): Record<string, { x: number; y: number }> => {
   if (!boardRect || ids.length === 0) return {};
 
   const windowW = window.innerWidth;
   const windowH = window.innerHeight;
-  const cardWidth = 320;
-  const cardHeight = 320;
+  const cardWidth = cardSize;
+  const cardHeight = cardSize;
   const sideMargin = 20;
 
   const innerBoardWidth = 640;
@@ -189,7 +191,7 @@ export const getSlotFromPoint = (
 ): number | null => {
   if (!boardRect) return null;
 
-  const boardSize = 640;
+  const boardSize = boardRect.width;
   const localX = clientX - boardRect.left;
   const localY = clientY - boardRect.top;
   const normalized = ((displayRotation % 360) + 360) % 360;

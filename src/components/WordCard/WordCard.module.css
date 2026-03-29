@@ -39,3 +39,9 @@
 .buttonVisible {
   opacity: 1;
 }
+
+@media (hover: none) {
+  .buttonBase {
+    opacity: 1;
+  }
+}

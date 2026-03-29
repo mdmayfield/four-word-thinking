@@ -3,6 +3,7 @@ import { CardState } from '../../hooks/GameStateTypes';
 
 interface WindowDropHandlersParams {
   mode: 'writing' | 'guessing';
+  isMobile: boolean;
   boardRotation: number;
   slotCardIds: (string | null)[];
   decoyId: string;
@@ -16,6 +17,7 @@ interface WindowDropHandlersParams {
 
 export const useWindowDropHandlers = ({
   mode,
+  isMobile,
   boardRotation,
   slotCardIds,
   decoyId,
@@ -73,8 +75,8 @@ export const useWindowDropHandlers = ({
       setOffboardCardPositions((prev) => ({
         ...prev,
         [cardId]: {
-          x: Math.max(0, Math.min(window.innerWidth - 320, rawX)),
-          y: Math.max(0, Math.min(window.innerHeight - 320, rawY)),
+          x: isMobile ? 0 : Math.max(0, Math.min(window.innerWidth - 320, rawX)),
+          y: isMobile ? 0 : Math.max(0, Math.min(window.innerHeight - 320, rawY)),
         },
       }));
 
@@ -92,5 +94,5 @@ export const useWindowDropHandlers = ({
       window.removeEventListener('drop', handleWindowDrop);
       window.removeEventListener('dragover', handleWindowDragOver);
     };
-  }, [mode, decoyId, dragOffsetsRef, setDecoyState, setCards, setSlotCardIds, setOffboardCardIds, setOffboardCardPositions]);
+  }, [mode, isMobile, decoyId, dragOffsetsRef, setDecoyState, setCards, setSlotCardIds, setOffboardCardIds, setOffboardCardPositions]);
 };

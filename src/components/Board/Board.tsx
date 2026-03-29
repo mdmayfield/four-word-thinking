@@ -2,7 +2,6 @@ import React from 'react';
 import BoardGrid from './BoardGrid';
 import { Mode, EdgeTuple } from './types';
 import { CardState } from '../../hooks/GameStateTypes';
-import OffboardCards from '../OffboardCards';
 import styles from './Board.module.css';
 
 interface BoardProps {
@@ -23,9 +22,6 @@ interface BoardProps {
   slotCardIds: (string | null)[];
   primeLookup: Record<string, CardState>;
   decoyState: CardState;
-  offboardCardIds: string[];
-  offboardCardPositions: Record<string, { x: number; y: number }>;
-  topOffboardCardId: string | null;
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
@@ -50,9 +46,6 @@ const Board: React.FC<BoardProps> = ({
   slotCardIds,
   primeLookup,
   decoyState,
-  offboardCardIds,
-  offboardCardPositions,
-  topOffboardCardId,
   setCardTopWord,
   handleDropOnSlot,
   handleDragStart,
@@ -81,18 +74,6 @@ const Board: React.FC<BoardProps> = ({
       handleDragStart={handleDragStart}
       correctSlots={correctSlots}
     />
-
-    {mode === 'guessing' && (
-      <OffboardCards
-        offboardCardIds={offboardCardIds}
-        primeLookup={primeLookup}
-        decoyState={decoyState}
-        offboardCardPositions={offboardCardPositions}
-        topOffboardCardId={topOffboardCardId}
-        setCardTopWord={setCardTopWord}
-        onDragStart={handleDragStart}
-      />
-    )}
   </div>
 );
 

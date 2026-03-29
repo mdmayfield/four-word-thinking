@@ -43,7 +43,8 @@ interface UseGameBoardResult {
 
 export const useGameBoard = (
   wordBank: string[],
-  initialEdges: EdgeTuple = ['Top', 'Right', 'Bottom', 'Left'] as const
+  initialEdges: EdgeTuple = ['Top', 'Right', 'Bottom', 'Left'] as const,
+  isMobile = false
 ): UseGameBoardResult => {
   const { savedSetup, setSavedSetup, setGuessSubmission } = useGameState();
 
@@ -90,6 +91,7 @@ export const useGameBoard = (
 
   useWindowDropHandlers({
     mode,
+    isMobile,
     boardRotation,
     slotCardIds,
     decoyId: decoyState.id,
@@ -223,15 +225,15 @@ export const useGameBoard = (
 
       if (droppedOutCard) {
         const fallbackPos = {
-          x: Math.max(0, Math.min(window.innerWidth - 320, dropPos.x)),
-          y: Math.max(0, Math.min(window.innerHeight - 320, dropPos.y)),
+          x: isMobile ? 0 : Math.max(0, Math.min(window.innerWidth - 320, dropPos.x)),
+          y: isMobile ? 0 : Math.max(0, Math.min(window.innerHeight - 320, dropPos.y)),
         };
 
         const targetPos = incomingCardOldPos || fallbackPos;
 
         next[droppedOutCard] = {
-          x: Math.max(0, Math.min(window.innerWidth - 320, targetPos.x)),
-          y: Math.max(0, Math.min(window.innerHeight - 320, targetPos.y)),
+          x: isMobile ? 0 : Math.max(0, Math.min(window.innerWidth - 320, targetPos.x)),
+          y: isMobile ? 0 : Math.max(0, Math.min(window.innerHeight - 320, targetPos.y)),
         };
       }
 

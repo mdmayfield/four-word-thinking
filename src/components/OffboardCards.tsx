@@ -13,6 +13,8 @@ interface OffboardCardsProps {
   topOffboardCardId: string | null;
   setCardTopWord: (cardId: string, direction: Direction) => void;
   onDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  boardScale: number;
+  isMobile: boolean;
 }
 
 const OffboardCards: React.FC<OffboardCardsProps> = ({
@@ -23,10 +25,47 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
   topOffboardCardId,
   setCardTopWord,
   onDragStart,
+  boardScale,
+  isMobile,
 }) => {
+  if (isMobile) {
+    const scaledCardSize = 320 * boardScale;
+
+    return (
+      <div className={styles.mobileTray}>
+        {offboardCardIds.map((cardId) => {
+          const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
+
+          return (
+            <div
+              key={`off-tray-${cardId}`}
+              className={styles.mobileCardShell}
+              style={{ width: scaledCardSize, height: scaledCardSize }}
+            >
+              <div
+                className={styles.mobileCardInner}
+                style={{ transform: `scale(${boardScale})`, transformOrigin: 'top left' }}
+              >
+                <WordCard
+                  id={cardId}
+                  words={card.words}
+                  boardRotation={0}
+                  topWordIndex={card.topWordIndex}
+                  isRotationEnabled={true}
+                  onRotate={(direction) => setCardTopWord(cardId, direction)}
+                  draggable
+                  onDragStart={(e) => onDragStart(e, cardId)}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.offboardRoot}>
-
       {offboardCardIds.map((cardId) => {
         const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
         const pos = offboardCardPositions[cardId] ?? { x: 40, y: 640 };

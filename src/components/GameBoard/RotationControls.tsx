@@ -6,10 +6,16 @@ interface RotationControlsProps {
   boardRotation: number;
   rotateBoard: (direction: 'left' | 'right') => void;
   showLabel?: boolean;
+  boardScale?: number;
 }
 
-const RotationControls: React.FC<RotationControlsProps> = ({ boardRotation, rotateBoard, showLabel = false }) => (
-  <Center style={{ width: '640px', justifyContent: 'space-between' }}>
+const RotationControls: React.FC<RotationControlsProps> = ({
+  boardRotation,
+  rotateBoard,
+  showLabel = false,
+  boardScale = 1,
+}) => (
+  <Center style={{ width: `${640 * boardScale}px`, justifyContent: 'space-between', maxWidth: '100%' }}>
     <Button size="xs" onClick={() => rotateBoard('left')} aria-label="Rotate board left">
       <IconArrowBackUp size={16} />
     </Button>
