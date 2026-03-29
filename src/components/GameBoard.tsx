@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+
+const DEBUG = import.meta.env.DEV;
 import { Stack, Text } from '@mantine/core';
 import confetti from 'canvas-confetti';
 import Board from './Board/Board';
@@ -67,14 +69,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
     <Stack align="center" gap="md">
-      <Text className={styles.gameBoardTitle}>
-        Game Board
-      </Text>
-
-      <ModeToggle mode={mode} setMode={setMode} />
+      {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
       <Stack gap="xs" align="center" className={styles.controlsContainer}>
-        <RotationControls boardRotation={boardRotation} rotateBoard={rotateBoard} />
+        <RotationControls boardRotation={boardRotation} rotateBoard={rotateBoard} showLabel={DEBUG} />
         <ActionControls
           mode={mode}
           onWritingSubmit={writingSubmit}
@@ -109,9 +107,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
         />
       </div>
 
-      <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={false} />
+      <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={DEBUG} />
 
-      {guessResult && <GuessResultDisplay result={guessResult} show={false} />}
+      {guessResult && <GuessResultDisplay result={guessResult} show={DEBUG} />}
     </Stack>
   );
 };
