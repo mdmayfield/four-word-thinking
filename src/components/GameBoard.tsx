@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from '@mantine/core';
 import confetti from 'canvas-confetti';
 import Board from './Board/Board';
@@ -59,8 +59,26 @@ const GameBoard: React.FC<GameBoardProps> = ({
   } = useGameBoard(wordBank, initialEdges);
 
   const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
-  const handleEdgeFocus = (edgeIndex: number) =>
+  const [focusEdgeIndex, setFocusEdgeIndex] = useState<number | null>(null);
+  const [focusRequestId, setFocusRequestId] = useState(0);
+
+  const requestEdgeFocus = (edgeIndex: number) => {
+    setFocusEdgeIndex(edgeIndex);
+    setFocusRequestId((prev) => prev + 1);
+  };
+
+  const handleEdgeFocus = (edgeIndex: number) => {
     rotateBoardTo(EDGE_TARGET_ROTATIONS[edgeIndex]);
+  };
+
+  const handleRotateBoard = (direction: 'left' | 'right') => {
+    rotateBoard(direction);
+    if (mode === 'writing') {
+      const delta = direction === 'right' ? 90 : -90;
+      const newBoardRotation = (boardRotation + delta + 360) % 360;
+      requestEdgeFocus((4 - newBoardRotation / 90) % 4);
+    }
+  };
 
   useEffect(() => {
     if (correctSlots.length === 4) {
@@ -68,11 +86,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [correctSlots.length]);
 
+  useEffect(() => {
+    if (mode === 'writing') {
+      requestEdgeFocus(0);
+    }
+  }, [mode]);
+
   return (
     <Stack align="center" gap="xl" style={{ minHeight: '100vh', justifyContent: 'center' }}>
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
-      <RotationControls boardRotation={boardRotation} rotateBoard={rotateBoard} showLabel={DEBUG} />
+      <RotationControls boardRotation={boardRotation} rotateBoard={handleRotateBoard} showLabel={DEBUG} />
 
       <div className={styles.viewportWrapper}>
         <Board
@@ -87,6 +111,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
           edges={edges}
           setEdges={setEdges}
           onEdgeFocus={handleEdgeFocus}
+          focusEdgeIndex={focusEdgeIndex}
+          focusRequestId={focusRequestId}
           cards={cards}
           slotCardIds={slotCardIds}
           primeLookup={primeLookup}

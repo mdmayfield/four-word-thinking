@@ -17,6 +17,8 @@ interface BoardProps {
   edges: EdgeTuple;
   setEdges: React.Dispatch<React.SetStateAction<EdgeTuple>>;
   onEdgeFocus?: (edgeIndex: number) => void;
+  focusEdgeIndex?: number | null;
+  focusRequestId?: number;
   cards: CardState[];
   slotCardIds: (string | null)[];
   primeLookup: Record<string, CardState>;
@@ -42,6 +44,8 @@ const Board: React.FC<BoardProps> = ({
   edges,
   setEdges,
   onEdgeFocus,
+  focusEdgeIndex,
+  focusRequestId,
   cards,
   slotCardIds,
   primeLookup,
@@ -64,6 +68,8 @@ const Board: React.FC<BoardProps> = ({
       edges={edges}
       setEdges={setEdges}
       onEdgeFocus={onEdgeFocus}
+      focusEdgeIndex={focusEdgeIndex}
+      focusRequestId={focusRequestId}
       displayRotation={displayRotation}
       boardRotation={boardRotation}
       disableTransition={disableTransition}

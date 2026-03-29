@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Mode } from './Board/types';
 import styles from './EdgeInputs.module.css';
 
@@ -9,14 +9,36 @@ interface EdgeInputsProps {
   setEdges: React.Dispatch<React.SetStateAction<EdgeTuple>>;
   mode: Mode;
   onEdgeFocus?: (edgeIndex: number) => void;
+  focusEdgeIndex?: number | null;
+  focusRequestId?: number;
 }
 
-const EdgeInputs: React.FC<EdgeInputsProps> = ({ edges, setEdges, mode, onEdgeFocus }) => {
+const EdgeInputs: React.FC<EdgeInputsProps> = ({
+  edges,
+  setEdges,
+  mode,
+  onEdgeFocus,
+  focusEdgeIndex,
+  focusRequestId,
+}) => {
   const [top, right, bottom, left] = edges;
+  const inputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
+  useEffect(() => {
+    if (focusEdgeIndex != null) {
+      inputRefs[focusEdgeIndex].current?.focus();
+    }
+  }, [focusEdgeIndex, focusRequestId]);
 
   return (
     <>
       <input
+        ref={inputRefs[0]}
         className={styles.inputStyle}
         style={{
           top: '-2rem',
@@ -30,6 +52,7 @@ const EdgeInputs: React.FC<EdgeInputsProps> = ({ edges, setEdges, mode, onEdgeFo
         disabled={mode === 'guessing'}
       />
       <input
+        ref={inputRefs[1]}
         className={styles.inputStyle}
         style={{
           top: '50%',
@@ -43,6 +66,7 @@ const EdgeInputs: React.FC<EdgeInputsProps> = ({ edges, setEdges, mode, onEdgeFo
         disabled={mode === 'guessing'}
       />
       <input
+        ref={inputRefs[2]}
         className={styles.inputStyle}
         style={{
           bottom: '-2rem',
@@ -56,6 +80,7 @@ const EdgeInputs: React.FC<EdgeInputsProps> = ({ edges, setEdges, mode, onEdgeFo
         disabled={mode === 'guessing'}
       />
       <input
+        ref={inputRefs[3]}
         className={styles.inputStyle}
         style={{
           top: '50%',
