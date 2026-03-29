@@ -21,7 +21,7 @@ interface GameBoardProps {
 
 const GameBoard: React.FC<GameBoardProps> = ({
   wordBank,
-  initialEdges = ['Top', 'Right', 'Bottom', 'Left'] as const,
+  initialEdges = ['', '', '', ''] as const,
 }) => {
   const { savedSetup, guessSubmission } = useGameState();
   const guessResult =
