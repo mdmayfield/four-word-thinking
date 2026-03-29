@@ -5,6 +5,7 @@ import { Mode } from '../Board/types';
 interface ActionControlsProps {
   mode: Mode;
   onWritingSubmit: () => void;
+  writingSubmitEnabled: boolean;
   onGuessingSubmit: () => void;
   guessingSubmitEnabled: boolean;
   isWon: boolean;
@@ -16,6 +17,7 @@ interface ActionControlsProps {
 const ActionControls: React.FC<ActionControlsProps> = ({
   mode,
   onWritingSubmit,
+  writingSubmitEnabled,
   onGuessingSubmit,
   guessingSubmitEnabled,
   isWon,
@@ -25,7 +27,7 @@ const ActionControls: React.FC<ActionControlsProps> = ({
 }) => (
   <Stack gap="xs" align="center" style={{ width: '100%' }}>
     {mode === 'writing' ? (
-      <Button onClick={onWritingSubmit} size="sm" mt="xs">
+      <Button onClick={onWritingSubmit} size="sm" mt="xs" disabled={!writingSubmitEnabled}>
         Save Clues
       </Button>
     ) : isWon ? (

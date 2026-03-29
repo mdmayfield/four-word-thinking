@@ -98,6 +98,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       <ActionControls
         mode={mode}
         onWritingSubmit={writingSubmit}
+        writingSubmitEnabled={edges.every((e) => e.length > 0)}
         onGuessingSubmit={guessingSubmit}
         guessingSubmitEnabled={guessingSubmitEnabled}
         isWon={correctSlots.length === 4}
