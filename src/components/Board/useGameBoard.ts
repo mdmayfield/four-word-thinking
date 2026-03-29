@@ -47,7 +47,7 @@ interface UseGameBoardResult {
   writingSubmit: () => void;
   guessingSubmit: () => void;
   nextRound: () => void;
-  reshuffleOffboardCards: () => void;
+  reshuffleOffboardCards: () => boolean;
 }
 
 export const useGameBoard = (
@@ -474,9 +474,10 @@ export const useGameBoard = (
   };
 
   const reshuffleOffboardCards = () => {
-    if (offboardCardIds.length === 0) return;
+    if (offboardCardIds.length === 0 || !boardRect) return false;
     const newPositions = getShuffledOffboardPositions(offboardCardIds, boardRect);
     setOffboardCardPositions(newPositions);
+    return true;
   };
 
   return {

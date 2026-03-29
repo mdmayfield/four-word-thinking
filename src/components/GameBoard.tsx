@@ -97,6 +97,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const touchHoldTimeoutRef = useRef<number | null>(null);
   const pendingTouchDragRef = useRef<PendingTouchDrag | null>(null);
   const [activeTouchDrag, setActiveTouchDrag] = useState<ActiveTouchDrag | null>(null);
+  const pendingDesktopReshuffleRef = useRef(false);
 
   // Escape key to deselect
   useEffect(() => {
@@ -117,10 +118,37 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const prevIsMobileRef = useRef(isMobile);
   useEffect(() => {
     if (prevIsMobileRef.current && !isMobile) {
-      reshuffleOffboardCards();
+      pendingDesktopReshuffleRef.current = true;
     }
     prevIsMobileRef.current = isMobile;
-  }, [isMobile, reshuffleOffboardCards]);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!pendingDesktopReshuffleRef.current) return;
+    if (isMobile || mode !== 'guessing' || !boardRect) return;
+
+    const timeoutId = window.setTimeout(() => {
+      const didReshuffle = reshuffleOffboardCards();
+      if (didReshuffle) {
+        pendingDesktopReshuffleRef.current = false;
+      }
+    }, 80);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isMobile, mode, boardRect, reshuffleOffboardCards]);
+
+  useEffect(() => {
+    if (isMobile || mode !== 'guessing' || offboardCardIds.length === 0 || !boardRect) return;
+
+    const hasMobileOriginPositions = offboardCardIds.some((id) => {
+      const pos = offboardCardPositions[id];
+      return !pos || (pos.x === 0 && pos.y === 0);
+    });
+
+    if (hasMobileOriginPositions) {
+      reshuffleOffboardCards();
+    }
+  }, [isMobile, mode, offboardCardIds, offboardCardPositions, boardRect, reshuffleOffboardCards]);
 
   const requestEdgeFocus = (edgeIndex: number) => {
     setFocusEdgeIndex(edgeIndex);
