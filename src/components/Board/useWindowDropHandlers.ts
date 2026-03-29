@@ -13,6 +13,7 @@ interface WindowDropHandlersParams {
   setSlotCardIds: React.Dispatch<React.SetStateAction<(string | null)[]>>;
   setOffboardCardIds: React.Dispatch<React.SetStateAction<string[]>>;
   setOffboardCardPositions: React.Dispatch<React.SetStateAction<Record<string, { x: number; y: number }>>>;
+  onDropComplete?: () => void;
 }
 
 export const useWindowDropHandlers = ({
@@ -27,12 +28,14 @@ export const useWindowDropHandlers = ({
   setSlotCardIds,
   setOffboardCardIds,
   setOffboardCardPositions,
+  onDropComplete,
 }: WindowDropHandlersParams) => {
-  // Use refs to avoid stale closures without re-registering listeners on every state change
   const boardRotationRef = useRef(boardRotation);
   boardRotationRef.current = boardRotation;
   const slotCardIdsRef = useRef(slotCardIds);
   slotCardIdsRef.current = slotCardIds;
+  const onDropCompleteRef = useRef(onDropComplete);
+  onDropCompleteRef.current = onDropComplete;
 
   useEffect(() => {
     const handleWindowDrop = (event: DragEvent) => {
@@ -81,6 +84,7 @@ export const useWindowDropHandlers = ({
       }));
 
       delete dragOffsetsRef.current[cardId];
+      onDropCompleteRef.current?.();
     };
 
     const handleWindowDragOver = (event: DragEvent) => {

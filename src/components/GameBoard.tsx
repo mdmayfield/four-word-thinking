@@ -86,6 +86,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     deselectCard,
     handleCardClick,
     handleSlotClick,
+    draggingCardId,
+    clearDragState,
   } = useGameBoard(wordBank, initialEdges, isMobile);
 
   const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
@@ -103,6 +105,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deselectCard]);
+
+  // dragend fires when a drag is cancelled (Escape, drop outside window, etc.)
+  useEffect(() => {
+    window.addEventListener('dragend', clearDragState);
+    return () => window.removeEventListener('dragend', clearDragState);
+  }, [clearDragState]);
 
   const requestEdgeFocus = (edgeIndex: number) => {
     setFocusEdgeIndex(edgeIndex);
@@ -397,6 +405,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     selectedCardId={selectedCardId}
                     handleCardClick={handleCardClick}
                     handleSlotClick={handleSlotClick}
+                    draggingCardId={draggingCardId}
           />
         </div>
       </div>

@@ -38,6 +38,7 @@ interface BoardGridProps {
   selectedCardId?: string | null;
   handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
   handleSlotClick?: (slotIndex: number, pos: { x: number; y: number }) => void;
+  draggingCardId?: string | null;
 }
 
 const BoardGrid: React.FC<BoardGridProps> = ({
@@ -67,6 +68,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
   selectedCardId,
   handleCardClick,
   handleSlotClick,
+  draggingCardId,
 }) => (
   <div
     ref={gridRef}
@@ -111,6 +113,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
         selectedCardId={selectedCardId}
         handleCardClick={handleCardClick}
         handleSlotClick={handleSlotClick}
+        draggingCardId={draggingCardId}
       />
     )}
 

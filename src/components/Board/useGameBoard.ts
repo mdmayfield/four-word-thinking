@@ -42,6 +42,8 @@ interface UseGameBoardResult {
   deselectCard: () => void;
   handleCardClick: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
   handleSlotClick: (slotIndex: number, pos: { x: number; y: number }) => void;
+  draggingCardId: string | null;
+  clearDragState: () => void;
   writingSubmit: () => void;
   guessingSubmit: () => void;
   nextRound: () => void;
@@ -83,6 +85,12 @@ export const useGameBoard = (
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
   const [correctSlots, setCorrectSlots] = useState<number[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
+
+  const clearDragState = () => {
+    setDraggingCardId(null);
+    setSelectedCardId(null);
+  };
 
   const deselectCard = () => setSelectedCardId(null);
 
@@ -152,6 +160,7 @@ export const useGameBoard = (
     setSlotCardIds,
     setOffboardCardIds,
     setOffboardCardPositions,
+    onDropComplete: clearDragState,
   });
 
   const primeLookup = useMemo<Record<string, CardState>>(() => {
@@ -322,6 +331,8 @@ export const useGameBoard = (
     if (!cardId) return;
 
     moveCardToSlot(cardId, targetSlot, { x: event.clientX, y: event.clientY });
+    setDraggingCardId(null);
+    setSelectedCardId(null);
   };
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, cardId: string) => {
@@ -356,10 +367,12 @@ export const useGameBoard = (
 
     dragOffsetsRef.current[cardId] = offset;
     setTopOffboardCardId(cardId);
+    setDraggingCardId(cardId);
   };
 
   const writingSubmit = () => {
     setSelectedCardId(null);
+    setDraggingCardId(null);
     setSavedSetup({ edges, cards: cards.map((c) => ({ ...c })), boardRotation });
 
     const shuffledCards = shuffleArray(cards);
@@ -382,6 +395,7 @@ export const useGameBoard = (
 
   const nextRound = () => {
     setSelectedCardId(null);
+    setDraggingCardId(null);
     const { cardWords: newCardWords, decoyWords: newDecoyWords } = generateCardSet(wordBank);
     setCards(newCardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 })));
     setDecoyState({ id: 'decoy', words: newDecoyWords, topWordIndex: 0 });
@@ -405,6 +419,7 @@ export const useGameBoard = (
   const guessingSubmit = () => {
     if (!guessingSubmitEnabled || !savedSetup) return;
     setSelectedCardId(null);
+    setDraggingCardId(null);
 
     const slotTopWordIndices = slotCardIds.map((cardId) => {
       if (cardId === null) return null;
@@ -486,6 +501,8 @@ export const useGameBoard = (
     deselectCard,
     handleCardClick,
     handleSlotClick,
+    draggingCardId,
+    clearDragState,
     handleDropOnSlot,
     handleDragStart,
     writingSubmit,

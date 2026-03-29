@@ -25,6 +25,7 @@ interface GuessingBoardProps {
   selectedCardId?: string | null;
   handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
   handleSlotClick?: (slotIndex: number, pos: { x: number; y: number }) => void;
+  draggingCardId?: string | null;
 }
 
 const GuessingBoard: React.FC<GuessingBoardProps> = ({
@@ -44,15 +45,17 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
   selectedCardId,
   handleCardClick,
   handleSlotClick,
+  draggingCardId,
 }) => (
   <>
     {[0, 1, 2, 3].map((slot) => {
       const cardId = slotCardIds[slot];
       const isLocked = correctSlots.includes(slot);
+      const activeCardId = selectedCardId ?? draggingCardId ?? null;
       const isEligibleTarget =
-        selectedCardId !== null &&
+        activeCardId !== null &&
         !isLocked &&
-        slotCardIds[slot] !== selectedCardId;
+        slotCardIds[slot] !== activeCardId;
       return (
         <div
           key={slot}
