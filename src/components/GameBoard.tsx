@@ -300,6 +300,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       ? decoyState
       : primeLookup[activeTouchDrag.cardId] ?? null
     : null;
+  const touchPreviewRotation = activeTouchDrag?.source === 'board' ? boardRotation : 0;
   const actionControls = (
     <ActionControls
       mode={mode}
@@ -442,13 +443,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
               transformOrigin: 'top left',
             }}
           >
-            <WordCard
-              id={activeTouchDrag.cardId}
-              words={activeTouchCard.words}
-              boardRotation={activeTouchDrag.source === 'board' ? displayRotation : 0}
-              topWordIndex={activeTouchCard.topWordIndex}
-              isRotationEnabled={false}
-            />
+            <div
+              style={{
+                width: BASE_CARD_SIZE,
+                height: BASE_CARD_SIZE,
+                transform: `rotate(${touchPreviewRotation}deg)`,
+                transformOrigin: 'center',
+              }}
+            >
+              <WordCard
+                id={activeTouchDrag.cardId}
+                words={activeTouchCard.words}
+                boardRotation={activeTouchDrag.source === 'board' ? displayRotation : 0}
+                topWordIndex={activeTouchCard.topWordIndex}
+                isRotationEnabled={false}
+              />
+            </div>
           </div>
         </div>
       )}
