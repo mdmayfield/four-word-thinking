@@ -57,8 +57,7 @@ const nudgeToFit = (
 export const getShuffledOffboardPositions = (
   ids: string[],
   boardRect: DOMRect | null,
-  existingPositions: Record<string, { x: number; y: number }> = {},
-  allOffboardIds?: string[]
+  existingPositions: Record<string, { x: number; y: number }> = {}
 ): Record<string, { x: number; y: number }> => {
   if (!boardRect) {
     return ids.reduce(
@@ -119,7 +118,6 @@ export const getShuffledOffboardPositions = (
   const occupied = Object.values(existingPositions);
   const positions: Record<string, { x: number; y: number }> = {};
   let idIndex = 0;
-  let hadFailure = false;
 
   const clampToWindow = (pos: { x: number; y: number }) => ({
     x: Math.max(sideMargin, Math.min(windowW - cardWidth - sideMargin, pos.x)),
@@ -130,7 +128,6 @@ export const getShuffledOffboardPositions = (
     const id = shuffledIds[idIndex++];
     const candidate = { x: chooseX(leftZoneXMin, leftZoneXMax), y: leftY[i] };
     const placed = nudgeToFit(candidate, [...occupied, ...Object.values(positions)], cardWidth, cardHeight, windowH, sideMargin);
-    if (placed === null) hadFailure = true;
     positions[id] = placed ?? clampToWindow(candidate);
   }
 
@@ -138,14 +135,55 @@ export const getShuffledOffboardPositions = (
     const id = shuffledIds[idIndex++];
     const candidate = { x: chooseX(rightZoneXMin, rightZoneXMax), y: rightY[i] };
     const placed = nudgeToFit(candidate, [...occupied, ...Object.values(positions)], cardWidth, cardHeight, windowH, sideMargin);
-    if (placed === null) hadFailure = true;
     positions[id] = placed ?? clampToWindow(candidate);
   }
 
-  // If we couldn't find clear spots and we know all offboard IDs, re-layout everything
-  // together so existing cards can shift to make room.
-  if (hadFailure && allOffboardIds) {
-    return getShuffledOffboardPositions(allOffboardIds, boardRect);
+  return positions;
+};
+
+/**
+ * Places ejected cards (wrong guesses) into available offboard space without
+ * reshuffling existing cards. Tries the left column, then the right column,
+ * then clamps to window bounds as a last resort.
+ */
+export const placeEjectedCards = (
+  ids: string[],
+  boardRect: DOMRect | null,
+  existingPositions: Record<string, { x: number; y: number }>
+): Record<string, { x: number; y: number }> => {
+  if (!boardRect || ids.length === 0) return {};
+
+  const windowW = window.innerWidth;
+  const windowH = window.innerHeight;
+  const cardWidth = 320;
+  const cardHeight = 320;
+  const sideMargin = 20;
+
+  const innerBoardWidth = 640;
+  const innerLeft = boardRect.left + (boardRect.width - innerBoardWidth) / 2;
+  const innerRight = innerLeft + innerBoardWidth;
+
+  const leftX = Math.max(sideMargin, innerLeft - cardWidth - 100);
+  const rightX = Math.min(windowW - cardWidth - sideMargin, innerRight + 100);
+
+  const clampToWindow = (pos: { x: number; y: number }) => ({
+    x: Math.max(sideMargin, Math.min(windowW - cardWidth - sideMargin, pos.x)),
+    y: Math.max(sideMargin, Math.min(windowH - cardHeight - sideMargin, pos.y)),
+  });
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  const occupied = Object.values(existingPositions);
+
+  for (const id of ids) {
+    const allOccupied = [...occupied, ...Object.values(positions)];
+    const centerY = windowH / 2 - cardHeight / 2;
+
+    const placed =
+      nudgeToFit({ x: leftX, y: centerY }, allOccupied, cardWidth, cardHeight, windowH, sideMargin) ??
+      nudgeToFit({ x: rightX, y: centerY }, allOccupied, cardWidth, cardHeight, windowH, sideMargin) ??
+      clampToWindow({ x: rightX, y: centerY });
+
+    positions[id] = placed;
   }
 
   return positions;

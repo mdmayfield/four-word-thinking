@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../hooks/GameStateContext';
 import { CardState } from '../../hooks/GameStateTypes';
-import { baseDecoy, shuffleArray, getShuffledOffboardPositions } from '../gameBoardUtils';
+import { baseDecoy, shuffleArray, placeEjectedCards } from '../gameBoardUtils';
 import { checkGuess } from '../../utils/checkGuess';
 import { Mode, EdgeTuple } from './types';
 import { useBoardDimensions } from './useBoardDimensions';
@@ -325,10 +325,7 @@ export const useGameBoard = (
 
     setSlotCardIds(newSlotCardIds);
     setOffboardCardIds((prev) => [...prev, ...cardsToRemove]);
-    // Pass all offboard IDs so the layout can relocate existing cards if needed
-    const allOffboardIds = [...offboardCardIds, ...cardsToRemove];
-    const newPositions = getShuffledOffboardPositions(cardsToRemove, boardRect, offboardCardPositions, allOffboardIds);
-    // If a full re-layout occurred, newPositions contains all offboard IDs; merging handles both cases
+    const newPositions = placeEjectedCards(cardsToRemove, boardRect, offboardCardPositions);
     setOffboardCardPositions((prev) => ({ ...prev, ...newPositions }));
   };
 
