@@ -15,17 +15,12 @@ import styles from './GameBoard.module.css';
 const DEBUG = import.meta.env.DEV;
 
 interface GameBoardProps {
-  cardWords: readonly [
-    readonly [string, string, string, string],
-    readonly [string, string, string, string],
-    readonly [string, string, string, string],
-    readonly [string, string, string, string],
-  ];
+  wordBank: string[];
   initialEdges?: readonly [string, string, string, string];
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
-  cardWords,
+  wordBank,
   initialEdges = ['Top', 'Right', 'Bottom', 'Left'] as const,
 }) => {
   const { savedSetup, guessSubmission } = useGameState();
@@ -60,7 +55,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     writingSubmit,
     guessingSubmit,
     nextRound,
-  } = useGameBoard(cardWords, initialEdges);
+  } = useGameBoard(wordBank, initialEdges);
 
   useEffect(() => {
     if (correctSlots.length === 4) {

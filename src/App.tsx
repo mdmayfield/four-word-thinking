@@ -1,19 +1,16 @@
 import { Box } from '@mantine/core';
 import GameBoard from './components/GameBoard';
 import { GameStateProvider } from './hooks/GameStateContext';
+import { parseWordBank } from './utils/generateCards';
+import wordBankRaw from './data/wordBank.txt?raw';
+
+const wordBank = parseWordBank(wordBankRaw);
 
 function App() {
-  const cards = [
-    ['Console', 'Voice', 'Recipient', 'Cell'],
-    ['Thunder', 'Straw', 'Religion', 'Promotion'],
-    ['Padlock', 'Inside', 'Astronaut', 'Fish'],
-    ['Finger', 'Note', 'Hard', 'Kitchen'],
-  ] as const;
-
   return (
     <GameStateProvider>
       <Box ta="center" pt="lg" w="100%">
-        <GameBoard cardWords={cards} />
+        <GameBoard wordBank={wordBank} />
       </Box>
     </GameStateProvider>
   );

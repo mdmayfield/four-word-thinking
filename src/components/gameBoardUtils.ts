@@ -1,11 +1,3 @@
-import { CardState } from '../hooks/GameStateTypes';
-
-export const baseDecoy: CardState = {
-  id: 'decoy',
-  words: ['Decoy', 'Bait', 'Lure', 'Trap'],
-  topWordIndex: 0,
-};
-
 export const shuffleArray = <T,>(input: T[]): T[] => {
   const array = [...input];
   for (let i = array.length - 1; i > 0; i -= 1) {

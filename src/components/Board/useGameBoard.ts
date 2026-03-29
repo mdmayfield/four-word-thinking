@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../hooks/GameStateContext';
 import { CardState } from '../../hooks/GameStateTypes';
-import { baseDecoy, shuffleArray, placeEjectedCards } from '../gameBoardUtils';
+import { shuffleArray, placeEjectedCards } from '../gameBoardUtils';
+import { generateCardSet } from '../../utils/generateCards';
 import { checkGuess } from '../../utils/checkGuess';
 import { Mode, EdgeTuple } from './types';
 import { useBoardDimensions } from './useBoardDimensions';
@@ -40,12 +41,7 @@ interface UseGameBoardResult {
 }
 
 export const useGameBoard = (
-  cardWords: readonly [
-    readonly [string, string, string, string],
-    readonly [string, string, string, string],
-    readonly [string, string, string, string],
-    readonly [string, string, string, string]
-  ],
+  wordBank: string[],
   initialEdges: EdgeTuple = ['Top', 'Right', 'Bottom', 'Left'] as const
 ): UseGameBoardResult => {
   const { savedSetup, setSavedSetup, setGuessSubmission } = useGameState();
@@ -58,9 +54,16 @@ export const useGameBoard = (
   const boardRef = React.useRef<HTMLDivElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
   const boardRect = useBoardDimensions(gridRef);
-  const [decoyState, setDecoyState] = useState<CardState>(baseDecoy);
-  const [cards, setCards] = useState<CardState[]>(
-    cardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 }))
+  const [{ cardWords: initCardWords, decoyWords: initDecoyWords }] = useState(() =>
+    generateCardSet(wordBank)
+  );
+  const [decoyState, setDecoyState] = useState<CardState>(() => ({
+    id: 'decoy',
+    words: initDecoyWords,
+    topWordIndex: 0,
+  }));
+  const [cards, setCards] = useState<CardState[]>(() =>
+    initCardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 }))
   );
   const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(cards.map((c) => c.id));
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
@@ -272,7 +275,7 @@ export const useGameBoard = (
     }));
 
     const randomizedDecoy = {
-      ...baseDecoy,
+      ...decoyState,
       topWordIndex: Math.floor(Math.random() * 4),
     };
 
@@ -284,9 +287,10 @@ export const useGameBoard = (
   };
 
   const nextRound = () => {
-    setCards(cardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 })));
-    setDecoyState(baseDecoy);
-    setSlotCardIds(cardWords.map((_, i) => `card-${i}`));
+    const { cardWords: newCardWords, decoyWords: newDecoyWords } = generateCardSet(wordBank);
+    setCards(newCardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 })));
+    setDecoyState({ id: 'decoy', words: newDecoyWords, topWordIndex: 0 });
+    setSlotCardIds(newCardWords.map((_, i) => `card-${i}`));
     setOffboardCardIds([]);
     setOffboardCardPositions({});
     setCorrectSlots([]);
