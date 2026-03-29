@@ -7,14 +7,18 @@ export interface CardSet {
 
 /**
  * Parses a raw word bank string (one word per line) into a deduplicated array.
- * Words are trimmed; empty lines are discarded. Case is preserved but duplicates
- * are detected case-insensitively.
+ * Words are trimmed; empty lines are discarded. Entries are normalized to
+ * first-letter-capitalized words (e.g. "wind" -> "Wind"). Duplicates are
+ * detected case-insensitively.
  */
 export function parseWordBank(raw: string): string[] {
+  const toFirstLetterCapital = (value: string): string =>
+    value.toLowerCase().replace(/^[a-z]/, (char) => char.toUpperCase());
+
   const seen = new Set<string>();
   return raw
     .split('\n')
-    .map((line) => line.trim())
+    .map((line) => toFirstLetterCapital(line.trim()))
     .filter((word) => {
       if (!word) return false;
       const key = word.toLowerCase();
