@@ -26,6 +26,7 @@ interface BoardProps {
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  correctSlots: number[];
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -49,6 +50,7 @@ const Board: React.FC<BoardProps> = ({
   setCardTopWord,
   handleDropOnSlot,
   handleDragStart,
+  correctSlots,
 }) => (
   <div ref={boardRef} className={styles.wrapper}>
     <BoardGrid
@@ -68,6 +70,7 @@ const Board: React.FC<BoardProps> = ({
       handleDropOnSlot={handleDropOnSlot}
       setCardTopWord={setCardTopWord}
       handleDragStart={handleDragStart}
+      correctSlots={correctSlots}
     />
 
     {mode === 'guessing' && (

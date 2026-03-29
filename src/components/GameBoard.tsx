@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack, Text } from '@mantine/core';
+import confetti from 'canvas-confetti';
 import Board from './Board/Board';
 import { useGameBoard } from './Board/useGameBoard';
 import ModeToggle from './GameBoard/ModeToggle';
@@ -51,11 +52,18 @@ const GameBoard: React.FC<GameBoardProps> = ({
     primeLookup,
     rotateBoard,
     setCardTopWord,
+    correctSlots,
     handleDropOnSlot,
     handleDragStart,
     writingSubmit,
     guessingSubmit,
   } = useGameBoard(cardWords, initialEdges);
+
+  useEffect(() => {
+    if (correctSlots.length === 4) {
+      confetti({ particleCount: 180, spread: 90, origin: { y: 0.55 } });
+    }
+  }, [correctSlots.length]);
 
   return (
     <Stack align="center" gap="md">
@@ -97,6 +105,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           setCardTopWord={setCardTopWord}
           handleDropOnSlot={handleDropOnSlot}
           handleDragStart={handleDragStart}
+          correctSlots={correctSlots}
         />
       </div>
 

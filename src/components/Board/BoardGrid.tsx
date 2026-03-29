@@ -24,6 +24,7 @@ interface BoardGridProps {
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  correctSlots: number[];
 }
 
 const BoardGrid: React.FC<BoardGridProps> = ({
@@ -43,6 +44,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
   handleDragStart,
   edges,
   setEdges,
+  correctSlots,
 }) => (
   <div
     ref={gridRef}
@@ -78,6 +80,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
         handleDropOnSlot={handleDropOnSlot}
         slotClassName={styles.slot}
         dropTextClassName={styles.dropText}
+        correctSlots={correctSlots}
       />
     )}
 

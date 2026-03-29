@@ -32,6 +32,7 @@ interface UseGameBoardResult {
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  correctSlots: number[];
   writingSubmit: () => void;
   guessingSubmit: () => void;
 }
@@ -67,6 +68,7 @@ export const useGameBoard = (
   const dragOffsetsRef = React.useRef<Record<string, { x: number; y: number }>>({});
   const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
+  const [correctSlots, setCorrectSlots] = useState<number[]>([]);
 
   useGuessingSetup({
     mode,
@@ -128,6 +130,7 @@ export const useGameBoard = (
 
     const { cardId } = JSON.parse(payload) as { cardId: string };
     if (!cardId) return;
+    if (correctSlots.includes(targetSlot)) return;
 
     const isOffBoard = offboardCardIds.includes(cardId);
     const rotation = ((boardRotation % 360) + 360) % 360;
@@ -274,10 +277,11 @@ export const useGameBoard = (
     setCards(randomizedCards);
     setDecoyState(randomizedDecoy);
     setHasInitializedGuessing(false);
+    setCorrectSlots([]);
     setMode('guessing');
   };
 
-  const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null);
+  const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null) && correctSlots.length < 4;
 
   const guessingSubmit = () => {
     if (!guessingSubmitEnabled || !savedSetup) return;
@@ -299,6 +303,12 @@ export const useGameBoard = (
     setGuessSubmission(submission);
 
     const result = checkGuess(savedSetup, submission);
+
+    // Mark newly correct slots
+    const newCorrectSlots = result.slotResults
+      .map((r, i) => (r.cardCorrect && r.orientationCorrect ? i : null))
+      .filter((i): i is number => i !== null);
+    setCorrectSlots(newCorrectSlots);
 
     // Determine which cards to remove from the board
     const cardsToRemove: string[] = [];
@@ -351,6 +361,7 @@ export const useGameBoard = (
     primeLookup,
     rotateBoard,
     setCardTopWord,
+    correctSlots,
     handleDropOnSlot,
     handleDragStart,
     writingSubmit,

@@ -13,6 +13,7 @@ interface GuessingBoardProps {
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   slotClassName?: string;
   dropTextClassName?: string;
+  correctSlots: number[];
 }
 
 const GuessingBoard: React.FC<GuessingBoardProps> = ({
@@ -25,10 +26,12 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
   handleDropOnSlot,
   slotClassName,
   dropTextClassName,
+  correctSlots,
 }) => (
   <>
     {[0, 1, 2, 3].map((slot) => {
       const cardId = slotCardIds[slot];
+      const isLocked = correctSlots.includes(slot);
       return (
         <div
           key={slot}
@@ -44,10 +47,11 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
               topWordIndex={
                 (primeLookup[cardId]?.topWordIndex ?? decoyState.topWordIndex)
               }
-              isRotationEnabled
-              onRotate={(direction) => setCardTopWord(cardId, direction)}
-              draggable
-              onDragStart={(e) => handleDragStart(e, cardId)}
+              isRotationEnabled={!isLocked}
+              onRotate={isLocked ? undefined : (direction) => setCardTopWord(cardId, direction)}
+              draggable={!isLocked}
+              onDragStart={isLocked ? undefined : (e) => handleDragStart(e, cardId)}
+              isCorrect={isLocked}
             />
           ) : (
             <Text
