@@ -9,7 +9,7 @@ const wordBank = parseWordBank(wordBankRaw);
 function App() {
   return (
     <GameStateProvider>
-      <Box ta="center" pt="lg" w="100%">
+      <Box ta="center" w="100%">
         <GameBoard wordBank={wordBank} />
       </Box>
     </GameStateProvider>

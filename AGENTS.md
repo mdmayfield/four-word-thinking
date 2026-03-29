@@ -18,7 +18,7 @@ Guess checking compares board-relative `topWordIndex` directly — no coordinate
 
 | Mode | What happens |
 |---|---|
-| `'writing'` | Writer places cards in slots (no drag, fixed order), sets four edge labels, rotates cards, optionally rotates board. Clicks **Save Setup**. |
+| `'writing'` | Writer places cards in slots (no drag, fixed order), sets four edge labels, rotates cards, optionally rotates board. Clicks **Save Clues**. |
 | `'guessing'` | All five cards are shuffled off-board with random orientations. Guesser drags cards onto slots, rotates them, then clicks **Submit Guess** (enabled only when all four slots are filled). |
 
 ## State

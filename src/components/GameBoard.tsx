@@ -12,7 +12,7 @@ import { useGameState } from '../hooks/GameStateContext';
 import { checkGuess } from '../utils/checkGuess';
 import styles from './GameBoard.module.css';
 
-const DEBUG = import.meta.env.DEV;
+const DEBUG = false; // import.meta.env.DEV;
 
 interface GameBoardProps {
   wordBank: string[];
@@ -64,20 +64,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }, [correctSlots.length]);
 
   return (
-    <Stack align="center" gap="md">
+    <Stack align="center" gap="xl" style={{ minHeight: '100vh', justifyContent: 'center' }}>
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
-      <Stack gap="xs" align="center" className={styles.controlsContainer}>
-        <RotationControls boardRotation={boardRotation} rotateBoard={rotateBoard} showLabel={DEBUG} />
-        <ActionControls
-          mode={mode}
-          onWritingSubmit={writingSubmit}
-          onGuessingSubmit={guessingSubmit}
-          guessingSubmitEnabled={guessingSubmitEnabled}
-          isWon={correctSlots.length === 4}
-          onNextRound={nextRound}
-        />
-      </Stack>
+      <RotationControls boardRotation={boardRotation} rotateBoard={rotateBoard} showLabel={DEBUG} />
 
       <div className={styles.viewportWrapper}>
         <Board
@@ -104,6 +94,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
           correctSlots={correctSlots}
         />
       </div>
+
+      <ActionControls
+        mode={mode}
+        onWritingSubmit={writingSubmit}
+        onGuessingSubmit={guessingSubmit}
+        guessingSubmitEnabled={guessingSubmitEnabled}
+        isWon={correctSlots.length === 4}
+        onNextRound={nextRound}
+      />
 
       <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={DEBUG} />
 

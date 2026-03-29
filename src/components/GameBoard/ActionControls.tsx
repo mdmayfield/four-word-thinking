@@ -22,7 +22,7 @@ const ActionControls: React.FC<ActionControlsProps> = ({
   <Stack gap="xs" align="center" style={{ width: '100%' }}>
     {mode === 'writing' ? (
       <Button onClick={onWritingSubmit} size="sm" mt="xs">
-        Save Setup
+        Save Clues
       </Button>
     ) : isWon ? (
       <Button onClick={onNextRound} size="sm" mt="xs" color="green">
