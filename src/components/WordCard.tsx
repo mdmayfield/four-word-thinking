@@ -18,6 +18,7 @@ interface WordCardProps {
   isCorrect?: boolean;
   isDragging?: boolean;
   isSelected?: boolean;
+  isEligibleTarget?: boolean;
 }
 
 const ROTATION_DURATION = 300; // ms
@@ -37,6 +38,7 @@ const WordCard: React.FC<WordCardProps> = ({
   isCorrect,
   isDragging,
   isSelected,
+  isEligibleTarget,
 }) => {
   const rightWordIndex = (topWordIndex + 1) % 4;
   const bottomWordIndex = (topWordIndex + 2) % 4;
@@ -60,7 +62,7 @@ const WordCard: React.FC<WordCardProps> = ({
       onDragStart={onDragStart}
       onTouchStart={onTouchStart}
       onClick={onClick}
-      className={`${styles.container} ${draggable ? styles.containerDrag : ''} ${isSelected ? styles.containerSelected : ''}`}
+      className={`${styles.container} ${draggable ? styles.containerDrag : ''} ${isSelected ? styles.containerSelected : ''} ${isEligibleTarget ? styles.containerEligibleTarget : ''}`}
       style={{
         transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
         transform: `rotate(${rotation}deg)`,

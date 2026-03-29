@@ -17,6 +17,12 @@
   outline-offset: -2px;
 }
 
+.slotEligible {
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
+  background-color: rgba(59, 130, 246, 0.10);
+}
+
 .dropText {
   transition: transform 0.3s ease;
 }

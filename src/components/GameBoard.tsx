@@ -417,6 +417,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           boardScale={boardScale}
           isMobile={isMobile}
           activeTouchCardId={activeTouchDrag?.cardId ?? null}
+          selectedCardIsOnBoard={selectedCardId !== null && slotCardIds.some((id) => id === selectedCardId)}
         />
       )}
 

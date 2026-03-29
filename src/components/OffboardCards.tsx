@@ -24,6 +24,7 @@ interface OffboardCardsProps {
   selectedCardId?: string | null;
   handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
   onBackgroundClick?: (pos: { x: number; y: number }) => void;
+  selectedCardIsOnBoard?: boolean;
 }
 
 const OffboardCards: React.FC<OffboardCardsProps> = ({
@@ -41,6 +42,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
   selectedCardId,
   handleCardClick,
   onBackgroundClick,
+  selectedCardIsOnBoard = false,
 }) => {
   if (isMobile) {
     const scaledCardSize = 320 * boardScale;
@@ -87,6 +89,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
                   }
                   isDragging={activeTouchCardId === cardId}
                                   isSelected={selectedCardId === cardId}
+                                  isEligibleTarget={selectedCardIsOnBoard && cardId !== selectedCardId}
                 />
               </div>
             </div>
@@ -128,6 +131,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
               draggable
               onDragStart={(e) => onDragStart(e, cardId)}
                           isSelected={selectedCardId === cardId}
+                          isEligibleTarget={selectedCardIsOnBoard && cardId !== selectedCardId}
             />
           </div>
         );

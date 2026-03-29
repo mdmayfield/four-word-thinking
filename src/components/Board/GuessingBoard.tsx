@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from '@mantine/core';
 import WordCard from '../WordCard';
 import { CardState } from '../../hooks/GameStateTypes';
+import gridStyles from './BoardGrid.module.css';
 
 interface GuessingBoardProps {
   slotCardIds: (string | null)[];
@@ -48,6 +49,10 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
     {[0, 1, 2, 3].map((slot) => {
       const cardId = slotCardIds[slot];
       const isLocked = correctSlots.includes(slot);
+      const isEligibleTarget =
+        selectedCardId !== null &&
+        !isLocked &&
+        slotCardIds[slot] !== selectedCardId;
       return (
         <div
           key={slot}
@@ -63,7 +68,7 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
               handleSlotClick?.(slot, { x: e.clientX, y: e.clientY });
             }
           }}
-          className={slotClassName}
+          className={`${slotClassName ?? ''} ${!cardId && isEligibleTarget ? gridStyles.slotEligible : ''}`}
         >
           {cardId ? (
             <WordCard
@@ -85,6 +90,7 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
               isCorrect={isLocked}
               isDragging={activeTouchCardId === cardId}
               isSelected={selectedCardId === cardId}
+              isEligibleTarget={isEligibleTarget}
             />
           ) : (
             <Text
