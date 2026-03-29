@@ -14,6 +14,7 @@ import WordCard from './WordCard';
 import AdBanner from './common/AdBanner';
 import { useGameState } from '../hooks/GameStateContext';
 import { checkGuess } from '../utils/checkGuess';
+import { stripSharedPuzzleParamsFromUrl } from '../utils/puzzleShare';
 import { useBoardScale } from '../hooks/useBoardScale';
 import { getSlotFromPoint } from './gameBoardUtils';
 import styles from './GameBoard.module.css';
@@ -444,15 +445,18 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   };
 
+  const clearSharedPuzzleUrlParams = () => {
+    const cleanUrl = stripSharedPuzzleParamsFromUrl();
+    window.history.replaceState(null, '', cleanUrl);
+  };
+
   return (
     <>
       <Modal
         opened={invalidLinkModalOpen}
         onClose={() => {
           setInvalidLinkModalOpen(false);
-          const url = new URL(window.location.href);
-          url.hash = '';
-          window.history.replaceState(null, '', url.toString());
+          clearSharedPuzzleUrlParams();
         }}
         title="Invalid puzzle link"
         size="sm"
@@ -468,9 +472,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             fullWidth
             onClick={() => {
               setInvalidLinkModalOpen(false);
-              const url = new URL(window.location.href);
-              url.hash = '';
-              window.history.replaceState(null, '', url.toString());
+              clearSharedPuzzleUrlParams();
             }}
           >
             OK

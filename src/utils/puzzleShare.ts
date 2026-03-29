@@ -396,6 +396,24 @@ export type SharedPuzzleDecodeResult =
 
 const SHARE_PARAM_KEY = 'p';
 
+export const stripSharedPuzzleParamsFromUrl = (urlLike = window.location.href): string => {
+  let url: URL;
+  try {
+    url = new URL(urlLike, window.location.origin);
+  } catch {
+    return window.location.href;
+  }
+
+  url.searchParams.delete(SHARE_PARAM_KEY);
+
+  const hashParams = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash);
+  hashParams.delete(SHARE_PARAM_KEY);
+  const nextHash = hashParams.toString();
+  url.hash = nextHash ? nextHash : '';
+
+  return url.toString();
+};
+
 export const buildShareUrl = (
   savedSetup: SavedSetup,
   decoyState: Pick<CardState, 'id' | 'words' | 'topWordIndex'>,

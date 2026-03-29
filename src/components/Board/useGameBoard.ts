@@ -8,6 +8,7 @@ import {
   buildShareUrl,
   decodeSharedPuzzleFromUrlDetailed,
   SharedPuzzleDecodeResult,
+  stripSharedPuzzleParamsFromUrl,
 } from '../../utils/puzzleShare';
 import { Mode, EdgeTuple } from './types';
 import { useBoardDimensions } from './useBoardDimensions';
@@ -467,6 +468,14 @@ export const useGameBoard = (
   const nextRound = () => {
     setSelectedCardId(null);
     setDraggingCardId(null);
+
+    try {
+      const cleanUrl = stripSharedPuzzleParamsFromUrl();
+      window.history.replaceState(null, '', cleanUrl);
+    } catch {
+      // Ignore URL cleanup failures and continue resetting game state.
+    }
+
     const { cardWords: newCardWords, decoyWords: newDecoyWords } = generateCardSet(wordBank);
     setCards(newCardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 })));
     setDecoyState({ id: 'decoy', words: newDecoyWords, topWordIndex: 0 });
