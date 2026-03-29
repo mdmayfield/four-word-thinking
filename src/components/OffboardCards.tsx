@@ -13,8 +13,14 @@ interface OffboardCardsProps {
   topOffboardCardId: string | null;
   setCardTopWord: (cardId: string, direction: Direction) => void;
   onDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  onCardTouchStart?: (
+    event: React.TouchEvent<HTMLDivElement>,
+    cardId: string,
+    source: 'board' | 'offboard'
+  ) => void;
   boardScale: number;
   isMobile: boolean;
+  activeTouchCardId?: string | null;
 }
 
 const OffboardCards: React.FC<OffboardCardsProps> = ({
@@ -25,8 +31,10 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
   topOffboardCardId,
   setCardTopWord,
   onDragStart,
+  onCardTouchStart,
   boardScale,
   isMobile,
+  activeTouchCardId,
 }) => {
   if (isMobile) {
     const scaledCardSize = 320 * boardScale;
@@ -53,8 +61,13 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
                   topWordIndex={card.topWordIndex}
                   isRotationEnabled={true}
                   onRotate={(direction) => setCardTopWord(cardId, direction)}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, cardId)}
+                  draggable={false}
+                  onTouchStart={
+                    onCardTouchStart
+                      ? (event) => onCardTouchStart(event, cardId, 'offboard')
+                      : undefined
+                  }
+                  isDragging={activeTouchCardId === cardId}
                 />
               </div>
             </div>

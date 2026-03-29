@@ -8,4 +8,7 @@
   background: rgba(255,255,255,0.9);
   border: 1px solid #ccc;
   border-radius: 4px;
+  color: #111;
+  caret-color: #111;
+  opacity: 1;
 }

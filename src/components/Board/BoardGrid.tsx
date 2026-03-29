@@ -27,6 +27,13 @@ interface BoardGridProps {
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  onCardTouchStart?: (
+    event: React.TouchEvent<HTMLDivElement>,
+    cardId: string,
+    source: 'board' | 'offboard'
+  ) => void;
+  isMobile?: boolean;
+  activeTouchCardId?: string | null;
   correctSlots: number[];
 }
 
@@ -45,6 +52,9 @@ const BoardGrid: React.FC<BoardGridProps> = ({
   handleDropOnSlot,
   setCardTopWord,
   handleDragStart,
+  onCardTouchStart,
+  isMobile,
+  activeTouchCardId,
   edges,
   setEdges,
   onEdgeFocus,
@@ -71,6 +81,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
         handleDropOnSlot(e as React.DragEvent<HTMLDivElement>, targetSlot);
       }
     }}
+    onDragEnter={(e) => e.preventDefault()}
     onDragOver={(e) => e.preventDefault()}
   >
     {mode === 'writing' ? (
@@ -84,6 +95,9 @@ const BoardGrid: React.FC<BoardGridProps> = ({
         setCardTopWord={setCardTopWord}
         handleDragStart={handleDragStart}
         handleDropOnSlot={handleDropOnSlot}
+        onCardTouchStart={onCardTouchStart}
+        isMobile={isMobile}
+        activeTouchCardId={activeTouchCardId}
         slotClassName={styles.slot}
         dropTextClassName={styles.dropText}
         correctSlots={correctSlots}

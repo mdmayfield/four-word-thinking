@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
 
-const BASE_BOARD_SIZE = 760;
-const HORIZONTAL_PADDING = 32;
+const BASE_BOARD_SIZE = 900;
+const HORIZONTAL_PADDING = 24;
+const RESERVED_HEIGHT = 240;
+
+const getViewportSize = () => ({
+  width: window.visualViewport?.width ?? window.innerWidth,
+  height: window.visualViewport?.height ?? window.innerHeight,
+});
 
 const getBoardScale = () => {
-  const usableWidth = Math.max(320, window.innerWidth - HORIZONTAL_PADDING);
-  return Math.min(1, usableWidth / BASE_BOARD_SIZE);
+  const viewport = getViewportSize();
+  const usableWidth = Math.max(320, viewport.width - HORIZONTAL_PADDING);
+  const usableHeight = Math.max(320, viewport.height - RESERVED_HEIGHT);
+
+  return Math.min(1, usableWidth / BASE_BOARD_SIZE, usableHeight / BASE_BOARD_SIZE);
 };
 
 export const useBoardScale = () => {

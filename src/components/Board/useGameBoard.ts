@@ -32,6 +32,8 @@ interface UseGameBoardResult {
   rotateBoard: (direction: 'left' | 'right') => void;
   rotateBoardTo: (targetBoardRotation: number) => void;
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
+  moveCardToSlot: (cardId: string, targetSlot: number, dropPos: { x: number; y: number }) => void;
+  moveCardOffBoard: (cardId: string, dropPos: { x: number; y: number }) => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
   correctSlots: number[];
@@ -139,22 +141,13 @@ export const useGameBoard = (
     }
   };
 
-  const handleDropOnSlot = (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const payload = event.dataTransfer.getData('application/json');
-    if (!payload) return;
-
-    const { cardId } = JSON.parse(payload) as { cardId: string };
-    if (!cardId) return;
-    if (correctSlots.includes(targetSlot)) return;
+  const moveCardToSlot = (cardId: string, targetSlot: number, dropPos: { x: number; y: number }) => {
+    if (!cardId || correctSlots.includes(targetSlot)) return;
 
     const isOffBoard = offboardCardIds.includes(cardId);
     const rotation = ((boardRotation % 360) + 360) % 360;
     const steps = rotation / 90;
 
-    // Convert screen-relative → board-relative when a card enters the board
     if (isOffBoard) {
       const toBoard = (idx: number) => (idx + steps) % 4;
       if (cardId === decoyState.id) {
@@ -171,9 +164,7 @@ export const useGameBoard = (
     }
 
     let droppedOutCard: string | null = null;
-    const dropPos = { x: event.clientX, y: event.clientY };
     const incomingCardOldPos = offboardCardPositions[cardId];
-
     const sourceSlot = slotCardIds.findIndex((id) => id === cardId);
 
     setSlotCardIds((prevSlots) => {
@@ -194,7 +185,6 @@ export const useGameBoard = (
       return newSlots;
     });
 
-    // Convert board-relative → screen-relative for any card displaced off the board
     if (droppedOutCard) {
       const toScreen = (idx: number) => ((idx - steps) % 4 + 4) % 4;
       const outId = droppedOutCard;
@@ -241,13 +231,56 @@ export const useGameBoard = (
     });
   };
 
+  const moveCardOffBoard = (cardId: string, dropPos: { x: number; y: number }) => {
+    const wasOnBoard = slotCardIds.some((id) => id === cardId);
+    if (!wasOnBoard) return;
+
+    const rotation = ((boardRotation % 360) + 360) % 360;
+    const steps = rotation / 90;
+    const toScreen = (idx: number) => ((idx - steps) % 4 + 4) % 4;
+
+    if (cardId === decoyState.id) {
+      setDecoyState((prev) => ({ ...prev, topWordIndex: toScreen(prev.topWordIndex) }));
+    } else {
+      setCards((prevCards) =>
+        prevCards.map((card) =>
+          card.id === cardId
+            ? { ...card, topWordIndex: toScreen(card.topWordIndex) }
+            : card
+        )
+      );
+    }
+
+    setSlotCardIds((prev) => prev.map((id) => (id === cardId ? null : id)));
+    setOffboardCardIds((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]));
+    setOffboardCardPositions((prev) => ({
+      ...prev,
+      [cardId]: {
+        x: isMobile ? 0 : Math.max(0, Math.min(window.innerWidth - 320, dropPos.x - 160)),
+        y: isMobile ? 0 : Math.max(0, Math.min(window.innerHeight - 320, dropPos.y - 160)),
+      },
+    }));
+  };
+
+  const handleDropOnSlot = (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const payload = event.dataTransfer.getData('application/json');
+    if (!payload) return;
+
+    const { cardId } = JSON.parse(payload) as { cardId: string };
+    if (!cardId) return;
+
+    moveCardToSlot(cardId, targetSlot, { x: event.clientX, y: event.clientY });
+  };
+
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, cardId: string) => {
     event.dataTransfer.setData('application/json', JSON.stringify({ cardId }));
     event.dataTransfer.effectAllowed = 'move';
 
     const isOnBoard = slotCardIds.some((id) => id === cardId);
 
-    // Set a custom drag image for board cards to preserve rotation.
     if (isOnBoard && event.currentTarget instanceof HTMLElement) {
       const cloned = event.currentTarget.cloneNode(true) as HTMLElement;
       cloned.style.position = 'fixed';
@@ -277,10 +310,8 @@ export const useGameBoard = (
   };
 
   const writingSubmit = () => {
-    // Save the original layout as the immutable answer key
     setSavedSetup({ edges, cards: cards.map((c) => ({ ...c })), boardRotation });
 
-    // Randomize orientations and order for the guessing player
     const shuffledCards = shuffleArray(cards);
     const randomizedCards = shuffledCards.map((card) => ({
       ...card,
@@ -317,7 +348,8 @@ export const useGameBoard = (
 
   const isWon = correctSlots.length === 4;
 
-  const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null) && !isWon;
+  const guessingSubmitEnabled =
+    mode === 'guessing' && slotCardIds.every((id) => id !== null) && !isWon;
 
   const guessingSubmit = () => {
     if (!guessingSubmitEnabled || !savedSetup) return;
@@ -339,14 +371,11 @@ export const useGameBoard = (
     setGuessSubmission(submission);
 
     const result = checkGuess(savedSetup, submission);
-
-    // Mark newly correct slots
     const newCorrectSlots = result.slotResults
       .map((r, i) => (r.cardCorrect && r.orientationCorrect ? i : null))
       .filter((i): i is number => i !== null);
     setCorrectSlots(newCorrectSlots);
 
-    // Determine which cards to remove from the board
     const cardsToRemove: string[] = [];
     const newSlotCardIds = slotCardIds.map((cardId, i) => {
       const slotResult = result.slotResults[i];
@@ -357,7 +386,6 @@ export const useGameBoard = (
 
     if (cardsToRemove.length === 0) return;
 
-    // Randomize orientation for each removed card
     setCards((prev) =>
       prev.map((card) =>
         cardsToRemove.includes(card.id)
@@ -398,6 +426,8 @@ export const useGameBoard = (
     rotateBoard,
     rotateBoardTo,
     setCardTopWord,
+    moveCardToSlot,
+    moveCardOffBoard,
     correctSlots,
     isWon,
     handleDropOnSlot,

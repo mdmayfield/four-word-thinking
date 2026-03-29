@@ -25,6 +25,13 @@ interface BoardProps {
   setCardTopWord: (cardId: string, direction: 'left' | 'right') => void;
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
+  onCardTouchStart?: (
+    event: React.TouchEvent<HTMLDivElement>,
+    cardId: string,
+    source: 'board' | 'offboard'
+  ) => void;
+  isMobile?: boolean;
+  activeTouchCardId?: string | null;
   correctSlots: number[];
 }
 
@@ -49,6 +56,9 @@ const Board: React.FC<BoardProps> = ({
   setCardTopWord,
   handleDropOnSlot,
   handleDragStart,
+  onCardTouchStart,
+  isMobile,
+  activeTouchCardId,
   correctSlots,
 }) => (
   <div ref={boardRef} className={styles.wrapper}>
@@ -72,6 +82,9 @@ const Board: React.FC<BoardProps> = ({
       handleDropOnSlot={handleDropOnSlot}
       setCardTopWord={setCardTopWord}
       handleDragStart={handleDragStart}
+      onCardTouchStart={onCardTouchStart}
+      isMobile={isMobile}
+      activeTouchCardId={activeTouchCardId}
       correctSlots={correctSlots}
     />
   </div>

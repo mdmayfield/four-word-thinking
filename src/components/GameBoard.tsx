@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Stack } from '@mantine/core';
 import confetti from 'canvas-confetti';
 import Board from './Board/Board';
@@ -9,16 +9,36 @@ import ActionControls from './GameBoard/ActionControls';
 import DebugCardList from './GameBoard/DebugCardList';
 import GuessResultDisplay from './GameBoard/GuessResultDisplay';
 import OffboardCards from './OffboardCards';
+import WordCard from './WordCard';
 import { useGameState } from '../hooks/GameStateContext';
 import { checkGuess } from '../utils/checkGuess';
 import { useBoardScale } from '../hooks/useBoardScale';
+import { getSlotFromPoint } from './gameBoardUtils';
 import styles from './GameBoard.module.css';
 
 const DEBUG = false; // import.meta.env.DEV;
+const TOUCH_HOLD_DELAY = 300;
+const TOUCH_CANCEL_DISTANCE = 12;
+const BASE_CARD_SIZE = 320;
 
 interface GameBoardProps {
   wordBank: string[];
   initialEdges?: readonly [string, string, string, string];
+}
+
+type TouchDragSource = 'board' | 'offboard';
+
+interface ActiveTouchDrag {
+  cardId: string;
+  source: TouchDragSource;
+  touchId: number;
+  clientX: number;
+  clientY: number;
+}
+
+interface PendingTouchDrag extends ActiveTouchDrag {
+  startX: number;
+  startY: number;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -53,6 +73,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     rotateBoard,
     rotateBoardTo,
     setCardTopWord,
+    moveCardToSlot,
+    moveCardOffBoard,
     correctSlots,
     handleDropOnSlot,
     handleDragStart,
@@ -64,6 +86,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
   const [focusEdgeIndex, setFocusEdgeIndex] = useState<number | null>(null);
   const [focusRequestId, setFocusRequestId] = useState(0);
+  const touchHoldTimeoutRef = useRef<number | null>(null);
+  const pendingTouchDragRef = useRef<PendingTouchDrag | null>(null);
+  const [activeTouchDrag, setActiveTouchDrag] = useState<ActiveTouchDrag | null>(null);
 
   const requestEdgeFocus = (edgeIndex: number) => {
     setFocusEdgeIndex(edgeIndex);
@@ -95,7 +120,179 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [mode]);
 
-  const trayPadding = isMobile ? Math.ceil(320 * boardScale) + 48 : 24;
+  useEffect(() => {
+    if (!isMobile || mode !== 'guessing') {
+      if (touchHoldTimeoutRef.current !== null) {
+        window.clearTimeout(touchHoldTimeoutRef.current);
+        touchHoldTimeoutRef.current = null;
+      }
+      pendingTouchDragRef.current = null;
+      setActiveTouchDrag(null);
+      return;
+    }
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (activeTouchDrag) {
+        const activeTouch = Array.from(event.touches).find(
+          (touch) => touch.identifier === activeTouchDrag.touchId
+        );
+        if (!activeTouch) return;
+
+        event.preventDefault();
+        setActiveTouchDrag((prev) =>
+          prev
+            ? {
+                ...prev,
+                clientX: activeTouch.clientX,
+                clientY: activeTouch.clientY,
+              }
+            : prev
+        );
+        return;
+      }
+
+      const pending = pendingTouchDragRef.current;
+      if (!pending) return;
+
+      const touch = Array.from(event.touches).find((item) => item.identifier === pending.touchId);
+      if (!touch) return;
+
+      const distance = Math.hypot(touch.clientX - pending.startX, touch.clientY - pending.startY);
+      if (distance > TOUCH_CANCEL_DISTANCE) {
+        if (touchHoldTimeoutRef.current !== null) {
+          window.clearTimeout(touchHoldTimeoutRef.current);
+          touchHoldTimeoutRef.current = null;
+        }
+        pendingTouchDragRef.current = null;
+      }
+    };
+
+    const clearTouchDrag = () => {
+      if (touchHoldTimeoutRef.current !== null) {
+        window.clearTimeout(touchHoldTimeoutRef.current);
+        touchHoldTimeoutRef.current = null;
+      }
+      pendingTouchDragRef.current = null;
+      setActiveTouchDrag(null);
+    };
+
+    const finishTouchDrag = (changedTouches: TouchList, isCanceled: boolean) => {
+      const completedDrag = activeTouchDrag;
+      if (completedDrag) {
+        const changedTouch = Array.from(changedTouches).find(
+          (touch) => touch.identifier === completedDrag.touchId
+        );
+        if (changedTouch) {
+          const dropPos = { x: changedTouch.clientX, y: changedTouch.clientY };
+          const targetSlot = getSlotFromPoint(
+            dropPos.x,
+            dropPos.y,
+            boardRect,
+            displayRotation
+          );
+
+          if (!isCanceled && targetSlot !== null) {
+            moveCardToSlot(completedDrag.cardId, targetSlot, dropPos);
+          } else if (completedDrag.source === 'board') {
+            moveCardOffBoard(completedDrag.cardId, dropPos);
+          }
+        }
+      }
+
+      clearTouchDrag();
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      const pending = pendingTouchDragRef.current;
+      if (pending) {
+        const changedTouch = Array.from(event.changedTouches).find(
+          (touch) => touch.identifier === pending.touchId
+        );
+        if (changedTouch) {
+          clearTouchDrag();
+          return;
+        }
+      }
+
+      if (activeTouchDrag) {
+        event.preventDefault();
+      }
+      finishTouchDrag(event.changedTouches, false);
+    };
+
+    const handleTouchCancel = (event: TouchEvent) => {
+      finishTouchDrag(event.changedTouches, true);
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+    window.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchCancel);
+    };
+  }, [activeTouchDrag, boardRect, displayRotation, isMobile, mode, moveCardOffBoard, moveCardToSlot]);
+
+  const handleCardTouchStart = (
+    event: React.TouchEvent<HTMLDivElement>,
+    cardId: string,
+    source: TouchDragSource
+  ) => {
+    if (!isMobile || mode !== 'guessing') return;
+    if (event.target instanceof Element && event.target.closest('button')) return;
+
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+
+    if (touchHoldTimeoutRef.current !== null) {
+      window.clearTimeout(touchHoldTimeoutRef.current);
+    }
+
+    const pendingTouch: PendingTouchDrag = {
+      cardId,
+      source,
+      touchId: touch.identifier,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      startX: touch.clientX,
+      startY: touch.clientY,
+    };
+
+    pendingTouchDragRef.current = pendingTouch;
+    touchHoldTimeoutRef.current = window.setTimeout(() => {
+      setActiveTouchDrag({
+        cardId: pendingTouch.cardId,
+        source: pendingTouch.source,
+        touchId: pendingTouch.touchId,
+        clientX: pendingTouch.clientX,
+        clientY: pendingTouch.clientY,
+      });
+      pendingTouchDragRef.current = null;
+      touchHoldTimeoutRef.current = null;
+    }, TOUCH_HOLD_DELAY);
+  };
+
+  const trayPadding = isMobile && mode === 'guessing' ? Math.ceil(320 * boardScale) + 32 : 24;
+  const activeTouchCard = activeTouchDrag
+    ? activeTouchDrag.cardId === decoyState.id
+      ? decoyState
+      : primeLookup[activeTouchDrag.cardId] ?? null
+    : null;
+  const actionControls = (
+    <ActionControls
+      mode={mode}
+      onWritingSubmit={writingSubmit}
+      writingSubmitEnabled={edges.every((e) => e.length > 0)}
+      onGuessingSubmit={guessingSubmit}
+      guessingSubmitEnabled={guessingSubmitEnabled}
+      isWon={correctSlots.length === 4}
+      onNextRound={nextRound}
+      onGiveUp={nextRound}
+      giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
+    />
+  );
 
   return (
     <Stack
@@ -105,6 +302,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         minHeight: '100dvh',
         justifyContent: isMobile ? 'flex-start' : 'center',
         padding: `16px 16px ${trayPadding}px`,
+        width: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
@@ -115,6 +314,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         showLabel={DEBUG}
         boardScale={boardScale}
       />
+
+      {isMobile && mode === 'guessing' && actionControls}
 
       <div
         className={styles.scaleFrame}
@@ -145,6 +346,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
             setCardTopWord={setCardTopWord}
             handleDropOnSlot={handleDropOnSlot}
             handleDragStart={handleDragStart}
+            onCardTouchStart={handleCardTouchStart}
+            isMobile={isMobile}
+            activeTouchCardId={activeTouchDrag?.cardId ?? null}
             correctSlots={correctSlots}
           />
         </div>
@@ -159,22 +363,46 @@ const GameBoard: React.FC<GameBoardProps> = ({
           topOffboardCardId={topOffboardCardId}
           setCardTopWord={setCardTopWord}
           onDragStart={handleDragStart}
+          onCardTouchStart={handleCardTouchStart}
           boardScale={boardScale}
           isMobile={isMobile}
+          activeTouchCardId={activeTouchDrag?.cardId ?? null}
         />
       )}
 
-      <ActionControls
-        mode={mode}
-        onWritingSubmit={writingSubmit}
-        writingSubmitEnabled={edges.every((e) => e.length > 0)}
-        onGuessingSubmit={guessingSubmit}
-        guessingSubmitEnabled={guessingSubmitEnabled}
-        isWon={correctSlots.length === 4}
-        onNextRound={nextRound}
-        onGiveUp={nextRound}
-        giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
-      />
+      {activeTouchCard && activeTouchDrag && (
+        <div
+          style={{
+            position: 'fixed',
+            left: activeTouchDrag.clientX - (BASE_CARD_SIZE * boardScale) / 2,
+            top: activeTouchDrag.clientY - (BASE_CARD_SIZE * boardScale) / 2,
+            width: BASE_CARD_SIZE * boardScale,
+            height: BASE_CARD_SIZE * boardScale,
+            pointerEvents: 'none',
+            zIndex: 2000,
+            opacity: 0.95,
+          }}
+        >
+          <div
+            style={{
+              width: BASE_CARD_SIZE,
+              height: BASE_CARD_SIZE,
+              transform: `scale(${boardScale})`,
+              transformOrigin: 'top left',
+            }}
+          >
+            <WordCard
+              id={activeTouchDrag.cardId}
+              words={activeTouchCard.words}
+              boardRotation={activeTouchDrag.source === 'board' ? displayRotation : 0}
+              topWordIndex={activeTouchCard.topWordIndex}
+              isRotationEnabled={false}
+            />
+          </div>
+        </div>
+      )}
+
+      {(!isMobile || mode !== 'guessing') && actionControls}
 
       <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={DEBUG} />
 

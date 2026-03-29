@@ -29,12 +29,16 @@
   pointer-events: auto;
   z-index: 1001;
   overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  box-sizing: border-box;
 }
 
 .mobileCardShell {
   position: relative;
   flex-shrink: 0;
   overflow: hidden;
+  touch-action: pan-x;
 }
 
 .mobileCardInner {

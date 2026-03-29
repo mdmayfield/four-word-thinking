@@ -13,7 +13,9 @@ interface WordCardProps {
   onRotate?: (direction: 'left' | 'right') => void;
   draggable?: boolean;
   onDragStart?: React.DragEventHandler<HTMLDivElement>;
+  onTouchStart?: React.TouchEventHandler<HTMLDivElement>;
   isCorrect?: boolean;
+  isDragging?: boolean;
 }
 
 const ROTATION_DURATION = 300; // ms
@@ -28,7 +30,9 @@ const WordCard: React.FC<WordCardProps> = ({
   onRotate,
   draggable,
   onDragStart,
+  onTouchStart,
   isCorrect,
+  isDragging,
 }) => {
   const rightWordIndex = (topWordIndex + 1) % 4;
   const bottomWordIndex = (topWordIndex + 2) % 4;
@@ -50,12 +54,14 @@ const WordCard: React.FC<WordCardProps> = ({
       id={id}
       draggable={draggable}
       onDragStart={onDragStart}
+      onTouchStart={onTouchStart}
       className={`${styles.container} ${draggable ? styles.containerDrag : ''}`}
       style={{
         transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
         transform: `rotate(${rotation}deg)`,
         zIndex: isRotating ? 10 : 1,
         backgroundColor: isCorrect ? '#80ff00' : undefined,
+        opacity: isDragging ? 0.35 : 1,
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
