@@ -10,6 +10,7 @@ import DebugCardList from './GameBoard/DebugCardList';
 import GuessResultDisplay from './GameBoard/GuessResultDisplay';
 import OffboardCards from './OffboardCards';
 import WordCard from './WordCard';
+import AdBanner from './common/AdBanner';
 import { useGameState } from '../hooks/GameStateContext';
 import { checkGuess } from '../utils/checkGuess';
 import { useBoardScale } from '../hooks/useBoardScale';
@@ -369,6 +370,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
           activeTouchCardId={activeTouchDrag?.cardId ?? null}
         />
       )}
+
+      {mode === 'guessing' && <AdBanner />}
 
       {activeTouchCard && activeTouchDrag && (
         <div

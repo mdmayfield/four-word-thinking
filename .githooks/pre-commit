@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+
+# Rebuild docs/ if any source files are staged.
+SOURCE_CHANGED=$(git diff --cached --name-only | grep -E '^(src/|index\.html|vite\.config\.ts|public/|package\.json|package-lock\.json)' || true)
+
+if [ -n "$SOURCE_CHANGED" ]; then
+  echo "Source changed — rebuilding docs/..."
+  npm run build:pages --silent
+  git add docs/
+  echo "docs/ rebuilt and staged."
+fi

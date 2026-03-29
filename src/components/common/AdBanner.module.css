@@ -1,0 +1,19 @@
+.adShell {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  min-height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.adInner {
+  width: 320px;
+  min-height: 50px;
+}
+
+@media (max-width: 480px) {
+  .adInner {
+    width: 300px;
+  }
+}
