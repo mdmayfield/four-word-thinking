@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@mantine/core';
+import { Button, Group } from '@mantine/core';
 import { Mode } from '../Board/types';
 
 interface ActionControlsProps {
@@ -54,3 +54,28 @@ export const GiveUpButton: React.FC<Pick<ActionControlsProps, 'onGiveUp' | 'give
     Give Up
   </Button>
 );
+
+interface ShareActionsProps {
+  onOpenQr: () => void;
+  onCopyLink: () => void;
+  shareEnabled: boolean;
+  copyLabel?: string;
+}
+
+export const ShareActions: React.FC<ShareActionsProps> = ({
+  onOpenQr,
+  onCopyLink,
+  shareEnabled,
+  copyLabel = 'Copy Link',
+}) => {
+  return (
+    <Group gap="xs">
+      <Button size="sm" variant="default" onClick={onOpenQr} disabled={!shareEnabled}>
+        QR Code
+      </Button>
+      <Button size="sm" variant="default" onClick={onCopyLink} disabled={!shareEnabled}>
+        {copyLabel}
+      </Button>
+    </Group>
+  );
+};

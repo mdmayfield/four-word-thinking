@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Stack } from '@mantine/core';
+import { Button, Group, Modal, Stack, Text } from '@mantine/core';
 import confetti from 'canvas-confetti';
+import { QRCodeSVG } from 'qrcode.react';
 import Board from './Board/Board';
 import { useGameBoard } from './Board/useGameBoard';
 import ModeToggle from './GameBoard/ModeToggle';
 import RotationControls from './GameBoard/RotationControls';
-import { PrimaryActionButton, GiveUpButton } from './GameBoard/ActionControls';
+import { PrimaryActionButton, GiveUpButton, ShareActions } from './GameBoard/ActionControls';
 import DebugCardList from './GameBoard/DebugCardList';
 import GuessResultDisplay from './GameBoard/GuessResultDisplay';
 import OffboardCards from './OffboardCards';
@@ -88,6 +89,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     handleSlotClick,
     draggingCardId,
     clearDragState,
+    shareUrl,
+    hasInvalidSharedPuzzle,
     reshuffleOffboardCards,
   } = useGameBoard(wordBank, initialEdges, isMobile);
 
@@ -97,6 +100,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const touchHoldTimeoutRef = useRef<number | null>(null);
   const pendingTouchDragRef = useRef<PendingTouchDrag | null>(null);
   const [activeTouchDrag, setActiveTouchDrag] = useState<ActiveTouchDrag | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [invalidLinkModalOpen, setInvalidLinkModalOpen] = useState(hasInvalidSharedPuzzle);
+  const [copyLabel, setCopyLabel] = useState('Copy Link');
+  const [qrSize, setQrSize] = useState(280);
+  const copyResetTimeoutRef = useRef<number | null>(null);
   const pendingDesktopReshuffleRef = useRef(false);
 
   // Escape key to deselect
@@ -107,6 +115,35 @@ const GameBoard: React.FC<GameBoardProps> = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deselectCard]);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimeoutRef.current !== null) {
+        window.clearTimeout(copyResetTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isShareModalOpen) return;
+
+    const setResponsiveQrSize = () => {
+      const viewport = window.visualViewport;
+      const width = viewport?.width ?? window.innerWidth;
+      const height = viewport?.height ?? window.innerHeight;
+      const nextSize = Math.floor(Math.max(220, Math.min(460, Math.min(width, height) - 64)));
+      setQrSize(nextSize);
+    };
+
+    setResponsiveQrSize();
+    window.addEventListener('resize', setResponsiveQrSize);
+    window.visualViewport?.addEventListener('resize', setResponsiveQrSize);
+
+    return () => {
+      window.removeEventListener('resize', setResponsiveQrSize);
+      window.visualViewport?.removeEventListener('resize', setResponsiveQrSize);
+    };
+  }, [isShareModalOpen]);
 
   // dragend fires when a drag is cancelled (Escape, drop outside window, etc.)
   useEffect(() => {
@@ -370,6 +407,43 @@ const GameBoard: React.FC<GameBoardProps> = ({
     deselectCard();
   };
 
+  const resetCopyLabelSoon = () => {
+    if (copyResetTimeoutRef.current !== null) {
+      window.clearTimeout(copyResetTimeoutRef.current);
+    }
+    copyResetTimeoutRef.current = window.setTimeout(() => {
+      setCopyLabel('Copy Link');
+      copyResetTimeoutRef.current = null;
+    }, 1400);
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!success) throw new Error('Copy command failed');
+      }
+
+      setCopyLabel('Copied');
+      resetCopyLabelSoon();
+    } catch {
+      setCopyLabel('Copy Failed');
+      resetCopyLabelSoon();
+    }
+  };
+
   return (
     <Stack
       align="center"
@@ -385,6 +459,35 @@ const GameBoard: React.FC<GameBoardProps> = ({
       onClick={handleBackgroundClick}
     >
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
+
+      <Modal
+        opened={invalidLinkModalOpen}
+        onClose={() => {
+          setInvalidLinkModalOpen(false);
+          const url = new URL(window.location.href);
+          url.hash = '';
+          window.history.replaceState(null, '', url.toString());
+        }}
+        title="Invalid puzzle link"
+        centered
+        size="sm"
+        styles={{ body: { paddingBottom: 'var(--mantine-spacing-xl)' } }}
+      >
+        <Stack gap="md">
+          <Text>Could not open the shared puzzle. Please try with a different link, or start a new puzzle.</Text>
+          <Button
+            fullWidth
+            onClick={() => {
+              setInvalidLinkModalOpen(false);
+              const url = new URL(window.location.href);
+              url.hash = '';
+              window.history.replaceState(null, '', url.toString());
+            }}
+          >
+            OK
+          </Button>
+        </Stack>
+      </Modal>
 
       <RotationControls
         boardRotation={boardRotation}
@@ -511,11 +614,45 @@ const GameBoard: React.FC<GameBoardProps> = ({
       )}
 
       {mode === 'guessing' && correctSlots.length < 4 && !slotCardIds.every((id) => id !== null) && (
-        <GiveUpButton
-          onGiveUp={nextRound}
-          giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
-        />
+        <Group gap="xs" justify="center" wrap="wrap">
+          <GiveUpButton
+            onGiveUp={nextRound}
+            giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
+          />
+          <ShareActions
+            onOpenQr={() => setIsShareModalOpen(true)}
+            onCopyLink={handleCopyLink}
+            shareEnabled={Boolean(shareUrl)}
+            copyLabel={copyLabel}
+          />
+        </Group>
       )}
+
+      <Modal
+        opened={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        fullScreen
+        title="Scan To Play"
+      >
+        <Stack align="center" justify="center" style={{ minHeight: '75dvh', width: '100%' }}>
+          {shareUrl ? (
+            <QRCodeSVG value={shareUrl} size={qrSize} />
+          ) : (
+            <Text c="dimmed">No shareable puzzle link is available yet.</Text>
+          )}
+          <Group gap="xs">
+            <Button variant="default" onClick={handleCopyLink} disabled={!shareUrl}>
+              {copyLabel}
+            </Button>
+            <Button onClick={() => setIsShareModalOpen(false)}>Close</Button>
+          </Group>
+          {shareUrl && (
+            <Text size="sm" c="dimmed" ta="center" maw={680}>
+              Open this link or scan the QR code on another device to start guessing this board.
+            </Text>
+          )}
+        </Stack>
+      </Modal>
 
       <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={DEBUG} />
 

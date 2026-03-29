@@ -4,6 +4,11 @@ import { CardState } from '../../hooks/GameStateTypes';
 import { shuffleArray, placeEjectedCards, getShuffledOffboardPositions } from '../gameBoardUtils';
 import { generateCardSet } from '../../utils/generateCards';
 import { checkGuess } from '../../utils/checkGuess';
+import {
+  buildShareUrl,
+  decodeSharedPuzzleFromUrlDetailed,
+  SharedPuzzleDecodeResult,
+} from '../../utils/puzzleShare';
 import { Mode, EdgeTuple } from './types';
 import { useBoardDimensions } from './useBoardDimensions';
 import { useGuessingSetup } from './useGuessingSetup';
@@ -44,6 +49,8 @@ interface UseGameBoardResult {
   handleSlotClick: (slotIndex: number, pos: { x: number; y: number }) => void;
   draggingCardId: string | null;
   clearDragState: () => void;
+  shareUrl: string | null;
+  hasInvalidSharedPuzzle: boolean;
   writingSubmit: () => void;
   guessingSubmit: () => void;
   nextRound: () => void;
@@ -56,27 +63,48 @@ export const useGameBoard = (
   isMobile = false
 ): UseGameBoardResult => {
   const { savedSetup, setSavedSetup, setGuessSubmission } = useGameState();
+  const sharedPuzzleDecodeResult = useMemo<SharedPuzzleDecodeResult>(
+    () => decodeSharedPuzzleFromUrlDetailed(),
+    []
+  );
+  const sharedPuzzle = sharedPuzzleDecodeResult.status === 'ok' ? sharedPuzzleDecodeResult.puzzle : null;
+  const hasInvalidSharedPuzzle = sharedPuzzleDecodeResult.status === 'invalid';
+  const hasHydratedFromUrlRef = React.useRef(false);
 
-  const [mode, setMode] = useState<Mode>('writing');
-  const [boardRotation, setBoardRotation] = useState(0);
-  const [displayRotation, setDisplayRotation] = useState(0);
+  const [mode, setMode] = useState<Mode>(sharedPuzzle ? 'guessing' : 'writing');
+  const [boardRotation, setBoardRotation] = useState(sharedPuzzle?.savedSetup.boardRotation ?? 0);
+  const [displayRotation, setDisplayRotation] = useState(sharedPuzzle?.savedSetup.boardRotation ?? 0);
   const [disableTransition, setDisableTransition] = useState(false);
-  const [edges, setEdges] = useState<EdgeTuple>(initialEdges);
+  const [edges, setEdges] = useState<EdgeTuple>(sharedPuzzle?.savedSetup.edges ?? initialEdges);
   const boardRef = React.useRef<HTMLDivElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
   const boardRect = useBoardDimensions(gridRef);
-  const [{ cardWords: initCardWords, decoyWords: initDecoyWords }] = useState(() =>
-    generateCardSet(wordBank)
+  const [initialCardSet] = useState(() => (sharedPuzzle ? null : generateCardSet(wordBank)));
+  const [decoyState, setDecoyState] = useState<CardState>(() => {
+    if (sharedPuzzle) {
+      return {
+        ...sharedPuzzle.decoyState,
+        topWordIndex: Math.floor(Math.random() * 4),
+      };
+    }
+    return {
+      id: 'decoy',
+      words: initialCardSet!.decoyWords,
+      topWordIndex: 0,
+    };
+  });
+  const [cards, setCards] = useState<CardState[]>(() => {
+    if (sharedPuzzle) {
+      return shuffleArray(sharedPuzzle.savedSetup.cards).map((card) => ({
+        ...card,
+        topWordIndex: Math.floor(Math.random() * 4),
+      }));
+    }
+    return initialCardSet!.cardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 }));
+  });
+  const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(
+    sharedPuzzle ? [null, null, null, null] : cards.map((c) => c.id)
   );
-  const [decoyState, setDecoyState] = useState<CardState>(() => ({
-    id: 'decoy',
-    words: initDecoyWords,
-    topWordIndex: 0,
-  }));
-  const [cards, setCards] = useState<CardState[]>(() =>
-    initCardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 }))
-  );
-  const [slotCardIds, setSlotCardIds] = useState<(string | null)[]>(cards.map((c) => c.id));
   const [offboardCardIds, setOffboardCardIds] = useState<string[]>([]);
   const [offboardCardPositions, setOffboardCardPositions] = useState<
     Record<string, { x: number; y: number }>
@@ -87,6 +115,21 @@ export const useGameBoard = (
   const [correctSlots, setCorrectSlots] = useState<number[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!sharedPuzzle || hasHydratedFromUrlRef.current) return;
+    hasHydratedFromUrlRef.current = true;
+    setSavedSetup(sharedPuzzle.savedSetup);
+    setMode('guessing');
+    setBoardRotation(sharedPuzzle.savedSetup.boardRotation);
+    setDisplayRotation(sharedPuzzle.savedSetup.boardRotation);
+    setDisableTransition(false);
+    setEdges(sharedPuzzle.savedSetup.edges);
+    setHasInitializedGuessing(false);
+    setCorrectSlots([]);
+    setSelectedCardId(null);
+    setDraggingCardId(null);
+  }, [setSavedSetup, sharedPuzzle]);
 
   const clearDragState = () => {
     setDraggingCardId(null);
@@ -167,6 +210,19 @@ export const useGameBoard = (
   const primeLookup = useMemo<Record<string, CardState>>(() => {
     return Object.fromEntries(cards.map((card) => [card.id, card]));
   }, [cards]);
+
+  const shareUrl = useMemo(() => {
+    if (!savedSetup) return null;
+    try {
+      return buildShareUrl(savedSetup, {
+        id: decoyState.id,
+        words: decoyState.words,
+        topWordIndex: 0,
+      });
+    } catch {
+      return null;
+    }
+  }, [savedSetup, decoyState.id, decoyState.words]);
 
   const rotateBoard = (direction: 'left' | 'right') => {
     const delta = direction === 'right' ? 90 : -90;
@@ -376,7 +432,19 @@ export const useGameBoard = (
     setDraggingCardId(null);
     const trimmedEdges = edges.map((e) => e.trim()) as unknown as typeof edges;
     setEdges(trimmedEdges);
-    setSavedSetup({ edges: trimmedEdges, cards: cards.map((c) => ({ ...c })), boardRotation });
+    const setupToSave = { edges: trimmedEdges, cards: cards.map((c) => ({ ...c })), boardRotation };
+    setSavedSetup(setupToSave);
+
+    try {
+      const nextShareUrl = buildShareUrl(setupToSave, {
+        id: decoyState.id,
+        words: decoyState.words,
+        topWordIndex: 0,
+      });
+      window.history.replaceState(null, '', nextShareUrl);
+    } catch {
+      // Ignore share URL generation failures and continue gameplay.
+    }
 
     const shuffledCards = shuffleArray(cards);
     const randomizedCards = shuffledCards.map((card) => ({
@@ -513,6 +581,8 @@ export const useGameBoard = (
     handleSlotClick,
     draggingCardId,
     clearDragState,
+    shareUrl,
+    hasInvalidSharedPuzzle,
     handleDropOnSlot,
     handleDragStart,
     writingSubmit,
