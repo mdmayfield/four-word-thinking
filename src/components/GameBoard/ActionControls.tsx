@@ -9,6 +9,8 @@ interface ActionControlsProps {
   guessingSubmitEnabled: boolean;
   isWon: boolean;
   onNextRound: () => void;
+  onGiveUp: () => void;
+  giveUpEnabled: boolean;
 }
 
 const ActionControls: React.FC<ActionControlsProps> = ({
@@ -18,6 +20,8 @@ const ActionControls: React.FC<ActionControlsProps> = ({
   guessingSubmitEnabled,
   isWon,
   onNextRound,
+  onGiveUp,
+  giveUpEnabled,
 }) => (
   <Stack gap="xs" align="center" style={{ width: '100%' }}>
     {mode === 'writing' ? (
@@ -29,9 +33,14 @@ const ActionControls: React.FC<ActionControlsProps> = ({
         Next Round
       </Button>
     ) : (
-      <Button onClick={onGuessingSubmit} size="sm" mt="xs" disabled={!guessingSubmitEnabled}>
-        Submit Guess
-      </Button>
+      <>
+        <Button onClick={onGuessingSubmit} size="sm" mt="xs" disabled={!guessingSubmitEnabled}>
+          Submit Guess
+        </Button>
+        <Button onClick={onGiveUp} size="sm" color="red" disabled={!giveUpEnabled}>
+          Give Up
+        </Button>
+      </>
     )}
   </Stack>
 );

@@ -102,6 +102,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         guessingSubmitEnabled={guessingSubmitEnabled}
         isWon={correctSlots.length === 4}
         onNextRound={nextRound}
+        onGiveUp={nextRound}
+        giveUpEnabled={mode === 'guessing' && correctSlots.length < 4 && slotCardIds.some((id) => id === null)}
       />
 
       <DebugCardList mode={mode} cards={cards} decoyState={decoyState} show={DEBUG} />
