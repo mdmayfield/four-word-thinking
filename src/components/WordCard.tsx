@@ -14,8 +14,10 @@ interface WordCardProps {
   draggable?: boolean;
   onDragStart?: React.DragEventHandler<HTMLDivElement>;
   onTouchStart?: React.TouchEventHandler<HTMLDivElement>;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
   isCorrect?: boolean;
   isDragging?: boolean;
+  isSelected?: boolean;
 }
 
 const ROTATION_DURATION = 300; // ms
@@ -31,8 +33,10 @@ const WordCard: React.FC<WordCardProps> = ({
   draggable,
   onDragStart,
   onTouchStart,
+  onClick,
   isCorrect,
   isDragging,
+  isSelected,
 }) => {
   const rightWordIndex = (topWordIndex + 1) % 4;
   const bottomWordIndex = (topWordIndex + 2) % 4;
@@ -55,7 +59,8 @@ const WordCard: React.FC<WordCardProps> = ({
       draggable={draggable}
       onDragStart={onDragStart}
       onTouchStart={onTouchStart}
-      className={`${styles.container} ${draggable ? styles.containerDrag : ''}`}
+      onClick={onClick}
+      className={`${styles.container} ${draggable ? styles.containerDrag : ''} ${isSelected ? styles.containerSelected : ''}`}
       style={{
         transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
         transform: `rotate(${rotation}deg)`,
@@ -68,20 +73,48 @@ const WordCard: React.FC<WordCardProps> = ({
     >
       {isRotationEnabled && (
         <div className={styles.controls} style={{ transform: `rotate(${-boardRotation}deg)` }}>
-          <Button
-            className={`${styles.buttonBase} ${isHovered ? styles.buttonVisible : ''}`}
+          <button
+            type="button"
+            className={`${styles.mobileTapZone} ${styles.mobileTapZoneLeft}`}
             aria-label="Rotate left"
-            onClick={() => handleRotate('left')}
-            style={{ top: '10px', left: '10px' }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRotate('left');
+            }}
+          />
+
+          <button
+            type="button"
+            className={`${styles.mobileTapZone} ${styles.mobileTapZoneRight}`}
+            aria-label="Rotate right"
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRotate('right');
+            }}
+          />
+
+          <Button
+            className={`${styles.buttonBase} ${styles.buttonLeft} ${isHovered ? styles.buttonVisible : ''}`}
+            aria-label="Rotate left"
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRotate('left');
+            }}
           >
             <IconArrowBackUp size={24} style={{ display: 'block' }} />
           </Button>
 
           <Button
-            className={`${styles.buttonBase} ${isHovered ? styles.buttonVisible : ''}`}
+            className={`${styles.buttonBase} ${styles.buttonRight} ${isHovered ? styles.buttonVisible : ''}`}
             aria-label="Rotate right"
-            onClick={() => handleRotate('right')}
-            style={{ top: '10px', right: '10px' }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRotate('right');
+            }}
           >
             <IconArrowForwardUp size={24} style={{ display: 'block' }} />
           </Button>

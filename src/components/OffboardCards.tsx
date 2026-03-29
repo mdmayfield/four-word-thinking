@@ -21,6 +21,9 @@ interface OffboardCardsProps {
   boardScale: number;
   isMobile: boolean;
   activeTouchCardId?: string | null;
+  selectedCardId?: string | null;
+  handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
+  onBackgroundClick?: (pos: { x: number; y: number }) => void;
 }
 
 const OffboardCards: React.FC<OffboardCardsProps> = ({
@@ -35,12 +38,22 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
   boardScale,
   isMobile,
   activeTouchCardId,
+  selectedCardId,
+  handleCardClick,
+  onBackgroundClick,
 }) => {
   if (isMobile) {
     const scaledCardSize = 320 * boardScale;
 
     return (
-      <div className={styles.mobileTray}>
+      <div
+        className={styles.mobileTray}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onBackgroundClick?.({ x: e.clientX, y: e.clientY });
+          }
+        }}
+      >
         {offboardCardIds.map((cardId) => {
           const card = cardId === decoyState.id ? decoyState : primeLookup[cardId] ?? decoyState;
 
@@ -49,6 +62,11 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
               key={`off-tray-${cardId}`}
               className={styles.mobileCardShell}
               style={{ width: scaledCardSize, height: scaledCardSize }}
+                          onClick={(e) => {
+                            if (e.target instanceof Element && e.target.closest('button')) return;
+                            e.stopPropagation();
+                            handleCardClick?.(cardId, 'offboard', { x: e.clientX, y: e.clientY });
+                          }}
             >
               <div
                 className={styles.mobileCardInner}
@@ -68,6 +86,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
                       : undefined
                   }
                   isDragging={activeTouchCardId === cardId}
+                                  isSelected={selectedCardId === cardId}
                 />
               </div>
             </div>
@@ -93,6 +112,11 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
               top: Math.max(0, Math.min(window.innerHeight - 320, pos.y)),
               zIndex,
             }}
+                      onClick={(e) => {
+                        if (e.target instanceof Element && e.target.closest('button')) return;
+                        e.stopPropagation();
+                        handleCardClick?.(cardId, 'offboard', { x: e.clientX, y: e.clientY });
+                      }}
           >
             <WordCard
               id={cardId}
@@ -103,6 +127,7 @@ const OffboardCards: React.FC<OffboardCardsProps> = ({
               onRotate={(direction) => setCardTopWord(cardId, direction)}
               draggable
               onDragStart={(e) => onDragStart(e, cardId)}
+                          isSelected={selectedCardId === cardId}
             />
           </div>
         );

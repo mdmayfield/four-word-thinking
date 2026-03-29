@@ -38,6 +38,10 @@ interface UseGameBoardResult {
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
   correctSlots: number[];
   isWon: boolean;
+  selectedCardId: string | null;
+  deselectCard: () => void;
+  handleCardClick: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
+  handleSlotClick: (slotIndex: number, pos: { x: number; y: number }) => void;
   writingSubmit: () => void;
   guessingSubmit: () => void;
   nextRound: () => void;
@@ -78,6 +82,51 @@ export const useGameBoard = (
   const [topOffboardCardId, setTopOffboardCardId] = useState<string | null>(null);
   const [hasInitializedGuessing, setHasInitializedGuessing] = useState(false);
   const [correctSlots, setCorrectSlots] = useState<number[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
+  const deselectCard = () => setSelectedCardId(null);
+
+  const handleSlotClick = (slotIndex: number, pos: { x: number; y: number }) => {
+    if (!selectedCardId || correctSlots.includes(slotIndex)) return;
+    moveCardToSlot(selectedCardId, slotIndex, pos);
+    setSelectedCardId(null);
+  };
+
+  const handleCardClick = (
+    cardId: string,
+    source: 'board' | 'offboard',
+    pos: { x: number; y: number }
+  ) => {
+    if (mode !== 'guessing') return;
+    const cardSlot = slotCardIds.indexOf(cardId);
+    if (cardSlot !== -1 && correctSlots.includes(cardSlot)) return;
+
+    if (selectedCardId === cardId) {
+      setSelectedCardId(null);
+      return;
+    }
+
+    if (selectedCardId !== null) {
+      const selectedSlot = slotCardIds.indexOf(selectedCardId);
+      const targetedSlot = source === 'board' ? cardSlot : -1;
+
+      if (source === 'board' && targetedSlot !== -1 && !correctSlots.includes(targetedSlot)) {
+        // Selected card onto a board slot occupied by the tapped card → swap/place
+        moveCardToSlot(selectedCardId, targetedSlot, pos);
+        setSelectedCardId(null);
+      } else if (source === 'offboard' && selectedSlot !== -1) {
+        // Selected card is on board, tapped card is offboard → place tapped onto selected's slot
+        moveCardToSlot(cardId, selectedSlot, pos);
+        setSelectedCardId(null);
+      } else {
+        // Both offboard → switch selection
+        setSelectedCardId(cardId);
+      }
+      return;
+    }
+
+    setSelectedCardId(cardId);
+  };
 
   useGuessingSetup({
     mode,
@@ -310,6 +359,7 @@ export const useGameBoard = (
   };
 
   const writingSubmit = () => {
+    setSelectedCardId(null);
     setSavedSetup({ edges, cards: cards.map((c) => ({ ...c })), boardRotation });
 
     const shuffledCards = shuffleArray(cards);
@@ -331,6 +381,7 @@ export const useGameBoard = (
   };
 
   const nextRound = () => {
+    setSelectedCardId(null);
     const { cardWords: newCardWords, decoyWords: newDecoyWords } = generateCardSet(wordBank);
     setCards(newCardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 })));
     setDecoyState({ id: 'decoy', words: newDecoyWords, topWordIndex: 0 });
@@ -353,6 +404,7 @@ export const useGameBoard = (
 
   const guessingSubmit = () => {
     if (!guessingSubmitEnabled || !savedSetup) return;
+    setSelectedCardId(null);
 
     const slotTopWordIndices = slotCardIds.map((cardId) => {
       if (cardId === null) return null;
@@ -430,6 +482,10 @@ export const useGameBoard = (
     moveCardOffBoard,
     correctSlots,
     isWon,
+    selectedCardId,
+    deselectCard,
+    handleCardClick,
+    handleSlotClick,
     handleDropOnSlot,
     handleDragStart,
     writingSubmit,

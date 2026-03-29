@@ -35,6 +35,9 @@ interface BoardGridProps {
   isMobile?: boolean;
   activeTouchCardId?: string | null;
   correctSlots: number[];
+  selectedCardId?: string | null;
+  handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
+  handleSlotClick?: (slotIndex: number, pos: { x: number; y: number }) => void;
 }
 
 const BoardGrid: React.FC<BoardGridProps> = ({
@@ -61,6 +64,9 @@ const BoardGrid: React.FC<BoardGridProps> = ({
   focusEdgeIndex,
   focusRequestId,
   correctSlots,
+  selectedCardId,
+  handleCardClick,
+  handleSlotClick,
 }) => (
   <div
     ref={gridRef}
@@ -83,6 +89,7 @@ const BoardGrid: React.FC<BoardGridProps> = ({
     }}
     onDragEnter={(e) => e.preventDefault()}
     onDragOver={(e) => e.preventDefault()}
+    onClick={(e) => e.stopPropagation()}
   >
     {mode === 'writing' ? (
       <WritingBoard cards={cards} displayRotation={displayRotation} />
@@ -101,6 +108,9 @@ const BoardGrid: React.FC<BoardGridProps> = ({
         slotClassName={styles.slot}
         dropTextClassName={styles.dropText}
         correctSlots={correctSlots}
+        selectedCardId={selectedCardId}
+        handleCardClick={handleCardClick}
+        handleSlotClick={handleSlotClick}
       />
     )}
 

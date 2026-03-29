@@ -17,23 +17,31 @@ const getBoardScale = () => {
   return Math.min(1, usableWidth / BASE_BOARD_SIZE, usableHeight / BASE_BOARD_SIZE);
 };
 
+// Use tray layout when viewport is taller than 80% of its width (portrait-ish)
+const getIsMobile = () => {
+  const viewport = getViewportSize();
+  return viewport.height > 0.8 * viewport.width;
+};
+
 export const useBoardScale = () => {
   const [boardScale, setBoardScale] = useState(() => getBoardScale());
+  const [isMobile, setIsMobile] = useState(() => getIsMobile());
 
   useEffect(() => {
-    const updateBoardScale = () => {
+    const update = () => {
       setBoardScale(getBoardScale());
+      setIsMobile(getIsMobile());
     };
 
-    updateBoardScale();
-    window.addEventListener('resize', updateBoardScale);
-    window.visualViewport?.addEventListener('resize', updateBoardScale);
+    update();
+    window.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('resize', update);
 
     return () => {
-      window.removeEventListener('resize', updateBoardScale);
-      window.visualViewport?.removeEventListener('resize', updateBoardScale);
+      window.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('resize', update);
     };
   }, []);
 
-  return { boardScale, isMobile: boardScale < 1 };
+  return { boardScale, isMobile };
 };

@@ -21,6 +21,9 @@ interface GuessingBoardProps {
   slotClassName?: string;
   dropTextClassName?: string;
   correctSlots: number[];
+  selectedCardId?: string | null;
+  handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
+  handleSlotClick?: (slotIndex: number, pos: { x: number; y: number }) => void;
 }
 
 const GuessingBoard: React.FC<GuessingBoardProps> = ({
@@ -37,6 +40,9 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
   slotClassName,
   dropTextClassName,
   correctSlots,
+  selectedCardId,
+  handleCardClick,
+  handleSlotClick,
 }) => (
   <>
     {[0, 1, 2, 3].map((slot) => {
@@ -48,6 +54,15 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
           onDrop={(e) => handleDropOnSlot(e, slot)}
           onDragEnter={(e) => e.preventDefault()}
           onDragOver={(e) => e.preventDefault()}
+          onClick={(e) => {
+            if (e.target instanceof Element && e.target.closest('button')) return;
+            e.stopPropagation();
+            if (cardId) {
+              handleCardClick?.(cardId, 'board', { x: e.clientX, y: e.clientY });
+            } else {
+              handleSlotClick?.(slot, { x: e.clientX, y: e.clientY });
+            }
+          }}
           className={slotClassName}
         >
           {cardId ? (
@@ -69,6 +84,7 @@ const GuessingBoard: React.FC<GuessingBoardProps> = ({
               }
               isCorrect={isLocked}
               isDragging={activeTouchCardId === cardId}
+              isSelected={selectedCardId === cardId}
             />
           ) : (
             <Text

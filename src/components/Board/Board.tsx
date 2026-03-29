@@ -33,6 +33,9 @@ interface BoardProps {
   isMobile?: boolean;
   activeTouchCardId?: string | null;
   correctSlots: number[];
+  selectedCardId?: string | null;
+  handleCardClick?: (cardId: string, source: 'board' | 'offboard', pos: { x: number; y: number }) => void;
+  handleSlotClick?: (slotIndex: number, pos: { x: number; y: number }) => void;
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -60,6 +63,9 @@ const Board: React.FC<BoardProps> = ({
   isMobile,
   activeTouchCardId,
   correctSlots,
+  selectedCardId,
+  handleCardClick,
+  handleSlotClick,
 }) => (
   <div ref={boardRef} className={styles.wrapper}>
     <BoardGrid
@@ -86,6 +92,9 @@ const Board: React.FC<BoardProps> = ({
       isMobile={isMobile}
       activeTouchCardId={activeTouchCardId}
       correctSlots={correctSlots}
+      selectedCardId={selectedCardId}
+      handleCardClick={handleCardClick}
+      handleSlotClick={handleSlotClick}
     />
   </div>
 );

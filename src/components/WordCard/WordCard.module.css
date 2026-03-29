@@ -16,6 +16,11 @@
   cursor: grab;
 }
 
+.containerSelected {
+  outline: 3px solid #3b82f6;
+  outline-offset: -3px;
+}
+
 .word {
   font-size: 32px;
   position: absolute;
@@ -40,12 +45,49 @@
   pointer-events: auto;
 }
 
+.buttonLeft {
+  top: 10px;
+  left: 10px;
+}
+
+.buttonRight {
+  top: 10px;
+  right: 10px;
+}
+
 .buttonVisible {
   opacity: 1;
+}
+
+.mobileTapZone {
+  display: none;
 }
 
 @media (hover: none) {
   .buttonBase {
     opacity: 1;
+  }
+
+  .mobileTapZone {
+    display: block;
+    position: absolute;
+    width: 106.667px;
+    height: 106.667px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    pointer-events: auto;
+    z-index: 3;
+  }
+
+  .mobileTapZoneLeft {
+    top: 0;
+    left: 0;
+  }
+
+  .mobileTapZoneRight {
+    top: 0;
+    right: 0;
   }
 }

@@ -82,6 +82,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
     writingSubmit,
     guessingSubmit,
     nextRound,
+    selectedCardId,
+    deselectCard,
+    handleCardClick,
+    handleSlotClick,
   } = useGameBoard(wordBank, initialEdges, isMobile);
 
   const EDGE_TARGET_ROTATIONS = [0, 270, 180, 90] as const;
@@ -90,6 +94,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const touchHoldTimeoutRef = useRef<number | null>(null);
   const pendingTouchDragRef = useRef<PendingTouchDrag | null>(null);
   const [activeTouchDrag, setActiveTouchDrag] = useState<ActiveTouchDrag | null>(null);
+
+  // Escape key to deselect
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') deselectCard();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [deselectCard]);
 
   const requestEdgeFocus = (edgeIndex: number) => {
     setFocusEdgeIndex(edgeIndex);
@@ -210,6 +223,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
           (touch) => touch.identifier === pending.touchId
         );
         if (changedTouch) {
+          event.preventDefault();
+          // Short tap — treat as click/select
+          handleCardClick(pending.cardId, pending.source, {
+            x: changedTouch.clientX,
+            y: changedTouch.clientY,
+          });
           clearTouchDrag();
           return;
         }
@@ -234,7 +253,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [activeTouchDrag, boardRect, displayRotation, isMobile, mode, moveCardOffBoard, moveCardToSlot]);
+  }, [activeTouchDrag, boardRect, displayRotation, handleCardClick, isMobile, mode, moveCardOffBoard, moveCardToSlot]);
 
   const handleCardTouchStart = (
     event: React.TouchEvent<HTMLDivElement>,
@@ -295,17 +314,40 @@ const GameBoard: React.FC<GameBoardProps> = ({
     />
   );
 
+  // Background click: deselect or eject selected board card to click position
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    if (e.target instanceof Element && e.target.closest('button')) return;
+    if (!selectedCardId) return;
+    const isOnBoard = slotCardIds.some((id) => id === selectedCardId);
+    if (isOnBoard) {
+      moveCardOffBoard(selectedCardId, { x: e.clientX, y: e.clientY });
+    }
+    deselectCard();
+  };
+
+  // Offboard tray/table background click
+  const handleOffboardAreaClick = (pos: { x: number; y: number }) => {
+    if (!selectedCardId) return;
+    const isOnBoard = slotCardIds.some((id) => id === selectedCardId);
+    if (isOnBoard) {
+      moveCardOffBoard(selectedCardId, pos);
+    }
+    deselectCard();
+  };
+
   return (
     <Stack
       align="center"
       gap="xl"
       style={{
         minHeight: '100dvh',
+        cursor: selectedCardId ? 'crosshair' : undefined,
         justifyContent: isMobile ? 'flex-start' : 'center',
         padding: `16px 16px ${trayPadding}px`,
         width: '100%',
         boxSizing: 'border-box',
       }}
+      onClick={handleBackgroundClick}
     >
       {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
@@ -351,6 +393,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
             isMobile={isMobile}
             activeTouchCardId={activeTouchDrag?.cardId ?? null}
             correctSlots={correctSlots}
+                    selectedCardId={selectedCardId}
+                    handleCardClick={handleCardClick}
+                    handleSlotClick={handleSlotClick}
           />
         </div>
       </div>
@@ -364,6 +409,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
           topOffboardCardId={topOffboardCardId}
           setCardTopWord={setCardTopWord}
           onDragStart={handleDragStart}
+                    selectedCardId={selectedCardId}
+                    handleCardClick={handleCardClick}
+                    onBackgroundClick={handleOffboardAreaClick}
           onCardTouchStart={handleCardTouchStart}
           boardScale={boardScale}
           isMobile={isMobile}
