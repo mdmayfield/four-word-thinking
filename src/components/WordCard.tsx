@@ -55,7 +55,7 @@ const WordCard: React.FC<WordCardProps> = ({
         transition: `transform ${isRotating ? ROTATION_DURATION : 0}ms linear`,
         transform: `rotate(${rotation}deg)`,
         zIndex: isRotating ? 10 : 1,
-        backgroundColor: isCorrect ? '#ffd700' : undefined,
+        backgroundColor: isCorrect ? '#80ff00' : undefined,
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
