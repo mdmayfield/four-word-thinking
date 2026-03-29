@@ -319,6 +319,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       : primeLookup[activeTouchDrag.cardId] ?? null
     : null;
   const touchPreviewRotation = activeTouchDrag?.source === 'board' ? boardRotation : 0;
+  const activeDnDCardId = draggingCardId ?? activeTouchDrag?.cardId ?? null;
 
   // Background click: deselect or eject selected board card to click position
   const handleBackgroundClick = (e: React.MouseEvent) => {
@@ -410,10 +411,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
             isMobile={isMobile}
             activeTouchCardId={activeTouchDrag?.cardId ?? null}
             correctSlots={correctSlots}
-                    selectedCardId={selectedCardId}
-                    handleCardClick={handleCardClick}
-                    handleSlotClick={handleSlotClick}
-                    draggingCardId={draggingCardId}
+            selectedCardId={selectedCardId}
+            handleCardClick={handleCardClick}
+            handleSlotClick={handleSlotClick}
+            draggingCardId={activeDnDCardId}
           />
         </div>
       </div>
