@@ -18,7 +18,7 @@ Guess checking compares board-relative `topWordIndex` directly — no coordinate
 
 | Mode | What happens |
 |---|---|
-| `'writing'` | Writer places cards in slots (no drag, fixed order), sets four edge labels, rotates cards, optionally rotates board. Clicks **Save Clues**. |
+| `'writing'` | Writer places cards in slots (no drag, fixed order), sets four edge labels, rotates cards, optionally rotates board. Clues are trimmed on blur/save, Enter advances focus to the next clue, then writer clicks **Save Clues**. |
 | `'guessing'` | All five cards are shuffled off-board with random orientations. Guesser drags cards onto slots, rotates them, then clicks **Submit Guess** (enabled only when all four slots are filled). |
 
 ## State
@@ -110,15 +110,15 @@ const getBoardScale = () => {
 };
 ```
 
-`isMobile` is `true` whenever `boardScale < 1`. Components use this flag to switch between desktop and mobile layouts/behaviours. The hook listens to both `window.resize` and `window.visualViewport.resize` so it reacts correctly when the on-screen keyboard appears.
+`isMobile` is `true` whenever `viewport.height > 0.8 * viewport.width` (portrait-ish aspect ratio). `boardScale` and `isMobile` are computed independently, and the hook listens to both `window.resize` and `window.visualViewport.resize`.
 
 ### Off-board card tray (mobile)
 
 On desktop, off-board cards float at absolute positions overlapping the board. On mobile (`isMobile === true`), `OffboardCards` switches to a **horizontal scrolling tray** rendered below the board. Each card shell is sized to `320 * boardScale` px so cards appear at the same visual size as they do on the (scaled) board. Cards are `draggable={false}` on mobile; touch interaction is handled entirely by the custom drag system described below.
 
-### Mobile action buttons
+### Action button placement
 
-In guessing mode, the **Submit Guess** and **Give Up** buttons are rendered **above** the board on mobile so they are never obscured by the card tray at the bottom of the screen.
+The primary action button (**Save Clues**, **Submit Guess**, or **Next Round**) is rendered above the board between the rotate buttons. **Give Up** remains below the board (guessing mode only, when not won and at least one slot is still empty).
 
 ### Touch drag system (`GameBoard.tsx`)
 
@@ -183,3 +183,17 @@ The preview is centred on the finger and scaled to match the rest of the UI.
 #### Imperative card-placement methods (`useGameBoard.ts`)
 
 `moveCardToSlot(cardId, targetSlot, dropPos)` and `moveCardOffBoard(cardId, dropPos)` are the shared primitives used by both the HTML5 drop path (desktop) and the touch drag path (mobile). `handleDropOnSlot` delegates to `moveCardToSlot` internally.
+
+### Selection + drag UX
+
+Guessing mode supports all three interaction paths at once:
+
+1. Desktop HTML5 drag-and-drop.
+2. Mobile long-press touch drag-and-drop.
+3. Click/tap select then click/tap destination.
+
+`selectedCardId` tracks click/tap selection, while `draggingCardId` tracks desktop drag state. Mobile hold-drag uses the active touch card as the drag source for highlight logic, so eligible destination highlights are consistent across desktop drag, mobile drag, and tap-select.
+
+### Offboard position recovery on layout switch
+
+When switching from mobile tray layout back to desktop floating layout, offboard cards are reshuffled using `getShuffledOffboardPositions()` once desktop board bounds are available. A recovery pass also reshuffles if any offboard card still has mobile-origin coordinates (for example `0,0`) after the transition.
