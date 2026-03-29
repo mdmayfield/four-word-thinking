@@ -445,21 +445,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <Stack
-      align="center"
-      gap="xl"
-      style={{
-        minHeight: '100dvh',
-        cursor: selectedCardId ? 'crosshair' : undefined,
-        justifyContent: isMobile ? 'flex-start' : 'center',
-        padding: `16px 16px ${trayPadding}px`,
-        width: '100%',
-        boxSizing: 'border-box',
-      }}
-      onClick={handleBackgroundClick}
-    >
-      {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
-
+    <>
       <Modal
         opened={invalidLinkModalOpen}
         onClose={() => {
@@ -469,9 +455,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
           window.history.replaceState(null, '', url.toString());
         }}
         title="Invalid puzzle link"
-        centered
         size="sm"
-        styles={{ body: { paddingBottom: 'var(--mantine-spacing-xl)' } }}
+        yOffset="12vh"
+        styles={{
+          inner: { paddingLeft: 16, paddingRight: 16 },
+          body: { paddingBottom: 'max(var(--mantine-spacing-xl), env(safe-area-inset-bottom))' },
+        }}
       >
         <Stack gap="md">
           <Text>Could not open the shared puzzle. Please try with a different link, or start a new puzzle.</Text>
@@ -488,6 +477,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </Button>
         </Stack>
       </Modal>
+
+      <Stack
+        align="center"
+        gap="xl"
+        style={{
+          minHeight: '100dvh',
+          cursor: selectedCardId ? 'crosshair' : undefined,
+          justifyContent: isMobile ? 'flex-start' : 'center',
+          padding: `16px 16px ${trayPadding}px`,
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+        onClick={handleBackgroundClick}
+      >
+      {DEBUG && <ModeToggle mode={mode} setMode={setMode} />}
 
       <RotationControls
         boardRotation={boardRotation}
@@ -658,6 +662,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {guessResult && <GuessResultDisplay result={guessResult} show={DEBUG} />}
     </Stack>
+    </>
   );
 };
 
