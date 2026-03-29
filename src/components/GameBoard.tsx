@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-
-const DEBUG = import.meta.env.DEV;
-import { Stack, Text } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import confetti from 'canvas-confetti';
 import Board from './Board/Board';
 import { useGameBoard } from './Board/useGameBoard';
@@ -13,6 +11,8 @@ import GuessResultDisplay from './GameBoard/GuessResultDisplay';
 import { useGameState } from '../hooks/GameStateContext';
 import { checkGuess } from '../utils/checkGuess';
 import styles from './GameBoard.module.css';
+
+const DEBUG = import.meta.env.DEV;
 
 interface GameBoardProps {
   cardWords: readonly [
@@ -59,6 +59,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     handleDragStart,
     writingSubmit,
     guessingSubmit,
+    nextRound,
   } = useGameBoard(cardWords, initialEdges);
 
   useEffect(() => {
@@ -78,6 +79,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
           onWritingSubmit={writingSubmit}
           onGuessingSubmit={guessingSubmit}
           guessingSubmitEnabled={guessingSubmitEnabled}
+          isWon={correctSlots.length === 4}
+          onNextRound={nextRound}
         />
       </Stack>
 

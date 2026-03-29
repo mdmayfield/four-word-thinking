@@ -33,8 +33,10 @@ interface UseGameBoardResult {
   handleDropOnSlot: (event: React.DragEvent<HTMLDivElement>, targetSlot: number) => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, cardId: string) => void;
   correctSlots: number[];
+  isWon: boolean;
   writingSubmit: () => void;
   guessingSubmit: () => void;
+  nextRound: () => void;
 }
 
 export const useGameBoard = (
@@ -281,7 +283,24 @@ export const useGameBoard = (
     setMode('guessing');
   };
 
-  const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null) && correctSlots.length < 4;
+  const nextRound = () => {
+    setCards(cardWords.map((words, i) => ({ id: `card-${i}`, words, topWordIndex: 0 })));
+    setDecoyState(baseDecoy);
+    setSlotCardIds(cardWords.map((_, i) => `card-${i}`));
+    setOffboardCardIds([]);
+    setOffboardCardPositions({});
+    setCorrectSlots([]);
+    setBoardRotation(0);
+    setDisplayRotation(0);
+    setDisableTransition(true);
+    setEdges(initialEdges);
+    setHasInitializedGuessing(false);
+    setMode('writing');
+  };
+
+  const isWon = correctSlots.length === 4;
+
+  const guessingSubmitEnabled = mode === 'guessing' && slotCardIds.every((id) => id !== null) && !isWon;
 
   const guessingSubmit = () => {
     if (!guessingSubmitEnabled || !savedSetup) return;
@@ -362,9 +381,11 @@ export const useGameBoard = (
     rotateBoard,
     setCardTopWord,
     correctSlots,
+    isWon,
     handleDropOnSlot,
     handleDragStart,
     writingSubmit,
     guessingSubmit,
+    nextRound,
   };
 };
